@@ -7,20 +7,49 @@ include 'db_connect.php';
 // ------------------------------------------------------------
 $total_students = $conn->query("SELECT COUNT(*) AS c FROM students WHERE status = 'Active'")->fetch_assoc()['c'];
 $total_boarders = $conn->query("SELECT COUNT(*) AS c FROM students WHERE status = 'Active' AND is_boarder = 1")->fetch_assoc()['c'];
+$total_day = $conn->query("SELECT COUNT(*) AS c FROM students WHERE status = 'Active' AND is_boarder = 0")->fetch_assoc()['c'];
 $total_classes = $conn->query("SELECT COUNT(*) AS c FROM classes")->fetch_assoc()['c'];
 $low_stock_items = $conn->query("SELECT COUNT(*) AS c FROM uniform_items WHERE quantity_in_stock <= 5")->fetch_assoc()['c'];
 
-// Recent fee payments (last 5)
+// Get current term id (needed for balance calculation below)
+$current_term_id = null;
+$tr_check = $conn->query("SELECT term_id FROM academic_terms WHERE is_current = 1 LIMIT 1");
+if ($tr_check && $tr_check->num_rows > 0) {
+    $current_term_id = $tr_check->fetch_assoc()['term_id'];
+}
+
+// Recent fee payments (last 5), arranged by class order (Baby Class -> P.7), with balance shown
 $recent_payments = [];
-$rp = $conn->query("SELECT fp.amount_paid, fp.date_paid, fp.receipt_number, s.full_name, c.class_name 
+$rp = $conn->query("SELECT fp.amount_paid, fp.date_paid, fp.receipt_number, 
+                     s.student_id, s.full_name, s.is_boarder, c.class_id, c.class_name, c.term_fee 
                      FROM fee_payments fp 
                      JOIN students s ON fp.student_id = s.student_id 
                      JOIN classes c ON s.class_id = c.class_id 
                      ORDER BY fp.payment_id DESC LIMIT 5");
 if ($rp) {
     while ($row = $rp->fetch_assoc()) {
+
+        // Work out this student's current balance
+        $due = $row['term_fee'];
+        if ($row['is_boarder']) {
+            $boarding_row = $conn->query("SELECT amount FROM boarding_fee LIMIT 1")->fetch_assoc();
+            $due = $boarding_row['amount'];
+        }
+
+        $paid_stmt = $conn->prepare("SELECT COALESCE(SUM(amount_paid),0) AS paid FROM fee_payments WHERE student_id = ? AND term_id = ?");
+        $paid_stmt->bind_param("ii", $row['student_id'], $current_term_id);
+        $paid_stmt->execute();
+        $paid_total = $paid_stmt->get_result()->fetch_assoc()['paid'];
+        $paid_stmt->close();
+
+        $row['balance'] = $due - $paid_total;
         $recent_payments[] = $row;
     }
+
+    // Arrange by class order: Baby Class -> P.7 (class_id reflects this order)
+    usort($recent_payments, function($a, $b) {
+        return $a['class_id'] <=> $b['class_id'];
+    });
 }
 
 // Current term label
@@ -343,14 +372,23 @@ if ($tr && $tr->num_rows > 0) {
         <div class="nav-label">Navigation</div>
         <a href="dashboard.php" class="nav-link"><span class="icon">&#8962;</span> Dashboard</a>
         <a href="register_student.php" class="nav-link"><span class="icon">&#9998;</span> Register Student</a>
+        <a href="manage_students.php" class="nav-link"><span class="icon">&#128101;</span> Manage Students</a>
         <a href="fee_payment.php" class="nav-link"><span class="icon">&#128176;</span> Fee Payment</a>
         <a href="uniform_issue.php" class="nav-link"><span class="icon">&#128085;</span> Issue Uniform</a>
         <a href="manage_uniforms.php" class="nav-link"><span class="icon">&#128230;</span> Manage Uniforms</a>
+        <a href="reports.php" class="nav-link"><span class="icon">&#128202;</span> Reports</a>
+        <a href="class_fee_status.php" class="nav-link"><span class="icon">&#127891;</span> Fee Status by Class</a>
+        <a href="manage_terms.php" class="nav-link"><span class="icon">&#128197;</span> Academic Terms</a>
+        <?php if ($_SESSION['role'] === 'Admin'): ?>
+        <a href="manage_users.php" class="nav-link"><span class="icon">&#128100;</span> Staff Accounts</a>
+        <?php endif; ?>
+        <a href="backup.php" class="nav-link"><span class="icon">&#128190;</span> Backup</a>
     </div>
 
     <div class="sidebar-footer">
         <div class="user-name"><?php echo htmlspecialchars($_SESSION['full_name'] ?: $_SESSION['username']); ?></div>
         <div class="user-role"><?php echo htmlspecialchars($_SESSION['role']); ?></div>
+        <a href="change_password.php" style="font-size:12px; color:rgba(255,255,255,0.7); text-decoration:none; display:block; margin-bottom:10px;">Change Password</a>
         <a href="logout.php" class="logout-btn"><span>&#10162;</span> Log Out</a>
     </div>
 </div>
@@ -374,6 +412,13 @@ if ($tr && $tr->num_rows > 0) {
             <div>
                 <div class="stat-number"><?php echo $total_boarders; ?></div>
                 <div class="stat-label">Boarding Students</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">&#127970;</div>
+            <div>
+                <div class="stat-number"><?php echo $total_day; ?></div>
+                <div class="stat-label">Day Students</div>
             </div>
         </div>
         <div class="stat-card">
@@ -408,6 +453,7 @@ if ($tr && $tr->num_rows > 0) {
                 <th>Student</th>
                 <th>Class</th>
                 <th>Amount</th>
+                <th>Balance</th>
                 <th>Date</th>
                 <th>Receipt #</th>
             </tr>
@@ -416,6 +462,9 @@ if ($tr && $tr->num_rows > 0) {
                 <td><?php echo htmlspecialchars($p['full_name']); ?></td>
                 <td><?php echo htmlspecialchars($p['class_name']); ?></td>
                 <td>UGX <?php echo number_format($p['amount_paid']); ?></td>
+                <td style="color: <?php echo $p['balance'] > 0 ? '#c0392b' : '#1b5e20'; ?>; font-weight:600;">
+                    UGX <?php echo number_format($p['balance']); ?>
+                </td>
                 <td><?php echo htmlspecialchars($p['date_paid']); ?></td>
                 <td><?php echo htmlspecialchars($p['receipt_number']); ?></td>
             </tr>

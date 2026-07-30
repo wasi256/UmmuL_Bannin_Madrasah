@@ -99,7 +99,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['student_id'])) {
         $stmt->bind_param("iidsss", $student_id, $term_id, $amount_paid, $payment_method, $received_by, $receipt_number);
 
         if ($stmt->execute()) {
-            $message = "Payment of UGX " . number_format($amount_paid) . " recorded successfully! Receipt #: " . $receipt_number;
+            $new_payment_id = $conn->insert_id;
+            $message = "Payment of UGX " . number_format($amount_paid) . " recorded successfully! Receipt #: " . $receipt_number 
+                . " — <a href='receipt.php?payment_id=" . $new_payment_id . "' target='_blank' style='color:#155724; text-decoration:underline; font-weight:600;'>Print Receipt</a>";
             $messageType = "success";
         } else {
             $message = "Error recording payment: " . $stmt->error;
@@ -394,13 +396,14 @@ $editing_payment_id = isset($_GET['edit_payment']) ? (int)$_GET['edit_payment'] 
 <body>
 
 <div class="container">
+    <a href="dashboard.php" class="back-link">&larr; Back to Dashboard</a>
     <img src="logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
     <h1>Ummul Bannin Madrasah</h1>
     <p class="subtitle">Fee Payment</p>
 
     <?php if ($message): ?>
         <div class="message <?php echo $messageType; ?>">
-            <?php echo htmlspecialchars($message); ?>
+            <?php echo $message; ?>
         </div>
     <?php endif; ?>
 
@@ -556,6 +559,9 @@ $editing_payment_id = isset($_GET['edit_payment']) ? (int)$_GET['edit_payment'] 
                     <td><?php echo htmlspecialchars($p['receipt_number']); ?></td>
                     <td>
                         <div class="row-actions">
+                            <a href="receipt.php?payment_id=<?php echo $p['payment_id']; ?>" target="_blank">
+                                <button type="button" class="btn-small" style="background-color:#1b5e20;">Print</button>
+                            </a>
                             <a href="?admission_number=<?php echo urlencode($student['admission_number']); ?>&edit_payment=<?php echo $p['payment_id']; ?>">
                                 <button type="button" class="btn-small btn-edit">Edit</button>
                             </a>

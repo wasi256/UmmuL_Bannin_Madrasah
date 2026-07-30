@@ -88,8 +88,8 @@ $classes_result = $conn->query("SELECT class_id, class_name, section FROM classe
     .logo {
         display: block;
         margin: 0 auto 15px auto;
-        width: 150px;
-        height: 150px;
+        width: 250px;
+        height: 250px;
         object-fit: contain;
     }
     h1 {
@@ -165,6 +165,7 @@ $classes_result = $conn->query("SELECT class_id, class_name, section FROM classe
 <body>
 
 <div class="container">
+        <a href="dashboard.php" class="back-link">&larr; Back to Dashboard</a>
     <img src="logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
     <h1>Ummul Bannin Madrasah</h1>
     <p class="subtitle">Student Registration</p>
