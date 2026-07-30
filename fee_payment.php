@@ -396,7 +396,6 @@ $editing_payment_id = isset($_GET['edit_payment']) ? (int)$_GET['edit_payment'] 
 <body>
 
 <div class="container">
-    <a href="dashboard.php" class="back-link">&larr; Back to Dashboard</a>
     <img src="logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
     <h1>Ummul Bannin Madrasah</h1>
     <p class="subtitle">Fee Payment</p>

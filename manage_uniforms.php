@@ -59,6 +59,35 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
 }
 
 // ------------------------------------------------------------
+// Handle editing an existing uniform item (including price)
+// ------------------------------------------------------------
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['action'] === "update_item") {
+    $uniform_id = $_POST['uniform_id'];
+    $item_name = trim($_POST['item_name']);
+    $applicable_section = $_POST['applicable_section'];
+    $applicable_gender = $_POST['applicable_gender'];
+    $price = $_POST['price'];
+
+    if (empty($item_name) || $price === "" || $price < 0) {
+        $message = "Please fill in the item name and a valid price.";
+        $messageType = "error";
+    } else {
+        $stmt = $conn->prepare("UPDATE uniform_items 
+            SET item_name = ?, applicable_section = ?, applicable_gender = ?, price = ? 
+            WHERE uniform_id = ?");
+        $stmt->bind_param("sssdi", $item_name, $applicable_section, $applicable_gender, $price, $uniform_id);
+        if ($stmt->execute()) {
+            $message = "Uniform item updated successfully.";
+            $messageType = "success";
+        } else {
+            $message = "Error updating item: " . $stmt->error;
+            $messageType = "error";
+        }
+        $stmt->close();
+    }
+}
+
+// ------------------------------------------------------------
 // Fetch all uniform items to display
 // ------------------------------------------------------------
 $items_result = $conn->query("SELECT * FROM uniform_items ORDER BY item_name");
@@ -66,6 +95,8 @@ $items = [];
 while ($row = $items_result->fetch_assoc()) {
     $items[] = $row;
 }
+
+$editing_id = isset($_GET['edit']) ? (int)$_GET['edit'] : null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -179,6 +210,21 @@ while ($row = $items_result->fetch_assoc()) {
         font-size: 13px;
     }
     .low-stock { color: #c0392b; font-weight: bold; }
+
+    .row-actions { display: flex; gap: 6px; }
+    .btn-small { padding: 6px 10px; font-size: 12px; border-radius: 4px; margin-top: 0; }
+    .btn-edit { background-color: #e0a800; }
+    .btn-edit:hover { background-color: #c69500; }
+    .btn-cancel { background-color: #999; }
+
+    .edit-panel {
+        padding: 15px;
+        background-color: #fff8e6;
+        border: 1px solid #ffe8a1;
+        border-radius: 6px;
+    }
+    .edit-panel h4 { margin-top: 0; color: #856404; font-size: 14px; }
+    .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 15px; }
 </style>
 </head>
 <body>
@@ -204,8 +250,57 @@ while ($row = $items_result->fetch_assoc()) {
             <th>Price</th>
             <th>In Stock</th>
             <th>Add Stock</th>
+            <th>Edit</th>
         </tr>
         <?php foreach ($items as $item): ?>
+            <?php if ($editing_id === (int)$item['uniform_id']): ?>
+            <tr>
+                <td colspan="7">
+                    <div class="edit-panel">
+                        <h4>Editing: <?php echo htmlspecialchars($item['item_name']); ?></h4>
+                        <form method="POST" action="">
+                            <input type="hidden" name="action" value="update_item">
+                            <input type="hidden" name="uniform_id" value="<?php echo $item['uniform_id']; ?>">
+
+                            <div class="edit-grid">
+                                <div>
+                                    <label>Item Name</label>
+                                    <input type="text" name="item_name" value="<?php echo htmlspecialchars($item['item_name']); ?>" required>
+                                </div>
+                                <div>
+                                    <label>Price (UGX)</label>
+                                    <input type="number" name="price" min="0" value="<?php echo $item['price']; ?>" required>
+                                </div>
+                                <div>
+                                    <label>Applies To Section</label>
+                                    <select name="applicable_section" required>
+                                        <option value="All" <?php echo $item['applicable_section'] === 'All' ? 'selected' : ''; ?>>All Sections</option>
+                                        <option value="Nursery" <?php echo $item['applicable_section'] === 'Nursery' ? 'selected' : ''; ?>>Nursery</option>
+                                        <option value="Lower Primary" <?php echo $item['applicable_section'] === 'Lower Primary' ? 'selected' : ''; ?>>Lower Primary</option>
+                                        <option value="Upper Primary" <?php echo $item['applicable_section'] === 'Upper Primary' ? 'selected' : ''; ?>>Upper Primary</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label>Applies To Gender</label>
+                                    <select name="applicable_gender" required>
+                                        <option value="All" <?php echo $item['applicable_gender'] === 'All' ? 'selected' : ''; ?>>All (Boys & Girls)</option>
+                                        <option value="Female" <?php echo $item['applicable_gender'] === 'Female' ? 'selected' : ''; ?>>Girls Only</option>
+                                        <option value="Male" <?php echo $item['applicable_gender'] === 'Male' ? 'selected' : ''; ?>>Boys Only</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="display:flex; gap:8px; margin-top:15px;">
+                                <button type="submit" class="btn-small btn-edit">Save Changes</button>
+                                <a href="manage_uniforms.php">
+                                    <button type="button" class="btn-small btn-cancel">Cancel</button>
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <?php else: ?>
             <tr>
                 <td><?php echo htmlspecialchars($item['item_name']); ?></td>
                 <td><?php echo htmlspecialchars($item['applicable_section']); ?></td>
@@ -222,7 +317,13 @@ while ($row = $items_result->fetch_assoc()) {
                         <button type="submit">Add</button>
                     </form>
                 </td>
+                <td>
+                    <a href="?edit=<?php echo $item['uniform_id']; ?>">
+                        <button type="button" class="btn-small btn-edit">Edit</button>
+                    </a>
+                </td>
             </tr>
+            <?php endif; ?>
         <?php endforeach; ?>
     </table>
 

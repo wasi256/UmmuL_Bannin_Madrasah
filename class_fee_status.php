@@ -49,6 +49,14 @@ if ($selected_class_id && $current_term) {
     while ($row = $result->fetch_assoc()) {
         $due = $row['is_boarder'] ? $boarding_amount : $row['term_fee'];
 
+        $disc_stmt = $conn->prepare("SELECT COALESCE(SUM(discount_amount),0) AS disc FROM fee_discounts WHERE student_id = ? AND term_id = ?");
+        $disc_stmt->bind_param("ii", $row['student_id'], $current_term['term_id']);
+        $disc_stmt->execute();
+        $discount_total = $disc_stmt->get_result()->fetch_assoc()['disc'];
+        $disc_stmt->close();
+
+        $due = $due - $discount_total;
+
         $paid_stmt = $conn->prepare("SELECT COALESCE(SUM(amount_paid),0) AS paid FROM fee_payments WHERE student_id = ? AND term_id = ?");
         $paid_stmt->bind_param("ii", $row['student_id'], $current_term['term_id']);
         $paid_stmt->execute();
