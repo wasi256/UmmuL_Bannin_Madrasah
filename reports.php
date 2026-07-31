@@ -55,6 +55,7 @@ if ($current_term) {
         if ($balance > 0) {
             $row['total_due'] = $due;
             $row['total_paid'] = $paid;
+            $row['discount'] = $discount_total;
             $row['balance'] = $balance;
             $outstanding[] = $row;
             $total_outstanding += $balance;
@@ -245,6 +246,7 @@ while ($row = $ub->fetch_assoc()) {
             <th>Class</th>
             <th>Boarding</th>
             <th>Total Due</th>
+            <th>Discount</th>
             <th>Paid</th>
             <th>Balance</th>
         </tr>
@@ -255,6 +257,9 @@ while ($row = $ub->fetch_assoc()) {
             <td><?php echo htmlspecialchars($o['class_name']); ?></td>
             <td><?php echo $o['is_boarder'] ? 'Yes' : 'No'; ?></td>
             <td>UGX <?php echo number_format($o['total_due']); ?></td>
+            <td style="color:<?php echo $o['discount'] > 0 ? '#0c5460' : '#999'; ?>;">
+                <?php echo $o['discount'] > 0 ? '- UGX ' . number_format($o['discount']) : '—'; ?>
+            </td>
             <td>UGX <?php echo number_format($o['total_paid']); ?></td>
             <td class="balance-owing">UGX <?php echo number_format($o['balance']); ?></td>
         </tr>

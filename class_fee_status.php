@@ -66,6 +66,7 @@ if ($selected_class_id && $current_term) {
         $balance = $due - $paid;
         $row['total_due'] = $due;
         $row['total_paid'] = $paid;
+        $row['discount'] = $discount_total;
         $row['balance'] = $balance;
 
         if ($balance <= 0) {
@@ -195,6 +196,7 @@ if ($selected_class_id && $current_term) {
                 <th>Name</th>
                 <th>Boarding</th>
                 <th>Total Due</th>
+                <th>Discount</th>
                 <th>Paid</th>
                 <th>Balance</th>
             </tr>
@@ -204,6 +206,9 @@ if ($selected_class_id && $current_term) {
                 <td><?php echo htmlspecialchars($o['full_name']); ?></td>
                 <td><?php echo $o['is_boarder'] ? 'Yes' : 'No'; ?></td>
                 <td>UGX <?php echo number_format($o['total_due']); ?></td>
+                <td style="color:<?php echo $o['discount'] > 0 ? '#0c5460' : '#999'; ?>;">
+                    <?php echo $o['discount'] > 0 ? '- UGX ' . number_format($o['discount']) : '—'; ?>
+                </td>
                 <td>UGX <?php echo number_format($o['total_paid']); ?></td>
                 <td class="balance-owing">UGX <?php echo number_format($o['balance']); ?></td>
             </tr>
@@ -222,6 +227,7 @@ if ($selected_class_id && $current_term) {
                 <th>Name</th>
                 <th>Boarding</th>
                 <th>Total Due</th>
+                <th>Discount</th>
                 <th>Paid</th>
                 <th>Balance</th>
             </tr>
@@ -231,6 +237,9 @@ if ($selected_class_id && $current_term) {
                 <td><?php echo htmlspecialchars($p['full_name']); ?></td>
                 <td><?php echo $p['is_boarder'] ? 'Yes' : 'No'; ?></td>
                 <td>UGX <?php echo number_format($p['total_due']); ?></td>
+                <td style="color:<?php echo $p['discount'] > 0 ? '#0c5460' : '#999'; ?>;">
+                    <?php echo $p['discount'] > 0 ? '- UGX ' . number_format($p['discount']) : '—'; ?>
+                </td>
                 <td>UGX <?php echo number_format($p['total_paid']); ?></td>
                 <td class="balance-clear">UGX 0</td>
             </tr>

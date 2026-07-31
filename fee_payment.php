@@ -177,6 +177,42 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
     $search_admission = $_POST['admission_number'];
 }
 
+// ------------------------------------------------------------
+// Handle granting a fee discount/waiver
+// ------------------------------------------------------------
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['action'] === "add_discount") {
+
+    $student_id      = $_POST['student_id'];
+    $term_id         = $_POST['term_id'];
+    $discount_amount = $_POST['discount_amount'];
+    $reason          = trim($_POST['reason']);
+    $approved_by     = trim($_POST['approved_by']);
+
+    if (empty($discount_amount) || $discount_amount <= 0) {
+        $message = "Please enter a valid discount amount.";
+        $messageType = "error";
+    } elseif (empty($approved_by)) {
+        $message = "Please state who approved this discount.";
+        $messageType = "error";
+    } else {
+        $stmt = $conn->prepare("INSERT INTO fee_discounts 
+            (student_id, term_id, discount_amount, reason, approved_by) 
+            VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("iidss", $student_id, $term_id, $discount_amount, $reason, $approved_by);
+
+        if ($stmt->execute()) {
+            $message = "Discount of UGX " . number_format($discount_amount) . " recorded successfully.";
+            $messageType = "success";
+        } else {
+            $message = "Error recording discount: " . $stmt->error;
+            $messageType = "error";
+        }
+        $stmt->close();
+    }
+
+    $search_admission = $_POST['admission_number'];
+}
+
 // Reload the student if we just edited/deleted a payment, so the balance and table refresh
 if (!empty($search_admission) && !$student) {
     $stmt = $conn->prepare("SELECT s.*, c.class_name, c.section, c.term_fee 
@@ -193,8 +229,11 @@ if (!empty($search_admission) && !$student) {
 }
 
 // ------------------------------------------------------------
-// Calculate total due, total paid, and balance for the student
+// Calculate total due, total paid, total discount, and balance
 // ------------------------------------------------------------
+$total_discount = 0;
+$discount_history = [];
+
 if ($student && $current_term) {
 
     if ($student['is_boarder']) {
@@ -214,6 +253,18 @@ if ($student && $current_term) {
     $total_paid = $paid_result['paid'];
     $stmt->close();
 
+    // Any discounts/waivers granted this term
+    $stmt = $conn->prepare("SELECT * FROM fee_discounts WHERE student_id = ? AND term_id = ? ORDER BY discount_id DESC");
+    $stmt->bind_param("ii", $student['student_id'], $current_term['term_id']);
+    $stmt->execute();
+    $disc_result = $stmt->get_result();
+    while ($row = $disc_result->fetch_assoc()) {
+        $discount_history[] = $row;
+        $total_discount += $row['discount_amount'];
+    }
+    $stmt->close();
+
+    $total_due = $total_due - $total_discount;
     $balance = $total_due - $total_paid;
 }
 
@@ -460,8 +511,14 @@ $editing_payment_id = isset($_GET['edit_payment']) ? (int)$_GET['edit_payment'] 
                 <span>Term</span>
                 <span><?php echo $current_term ? "Term " . $current_term['term_number'] . ", " . $current_term['academic_year'] : "N/A"; ?></span>
             </div>
+            <?php if ($total_discount > 0): ?>
+            <div class="info-row" style="color:#0c5460;">
+                <span>Discount/Waiver Applied</span>
+                <span>- UGX <?php echo number_format($total_discount); ?></span>
+            </div>
+            <?php endif; ?>
             <div class="info-row">
-                <span>Total Fees Due</span>
+                <span>Total Fees Due<?php echo $total_discount > 0 ? ' (after discount)' : ''; ?></span>
                 <span>UGX <?php echo number_format($total_due); ?></span>
             </div>
             <div class="info-row">
@@ -473,6 +530,53 @@ $editing_payment_id = isset($_GET['edit_payment']) ? (int)$_GET['edit_payment'] 
                 <span>UGX <?php echo number_format($balance); ?></span>
             </div>
         </div>
+
+        <?php if ($current_term): ?>
+        <!-- Grant a discount/waiver -->
+        <div class="student-card" style="background-color:#f0f7fb; border-color:#c8e0ee; margin-top:15px;">
+            <h4 style="margin:0 0 10px 0; color:#0c5460; font-size:14px;">Grant a Fee Discount / Waiver</h4>
+            <p style="font-size:12.5px; color:#555; margin-bottom:12px;">
+                Use this if a parent negotiated a reduced fee with the Accountant or Head Master. This records who approved it and reduces the amount due — it does not touch the standard class fees for other students.
+            </p>
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="add_discount">
+                <input type="hidden" name="student_id" value="<?php echo $student['student_id']; ?>">
+                <input type="hidden" name="term_id" value="<?php echo $current_term['term_id']; ?>">
+                <input type="hidden" name="admission_number" value="<?php echo htmlspecialchars($student['admission_number']); ?>">
+
+                <label style="font-size:13px;">Discount Amount (UGX)</label>
+                <input type="number" name="discount_amount" min="1" required>
+
+                <label style="font-size:13px;">Reason</label>
+                <input type="text" name="reason" placeholder="e.g. Sibling discount, financial hardship" required>
+
+                <label style="font-size:13px;">Approved By</label>
+                <input type="text" name="approved_by" placeholder="e.g. Head Master Musa Ali" required>
+
+                <button type="submit" style="margin-top:12px; background-color:#0c5460;">Record Discount</button>
+            </form>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!empty($discount_history)): ?>
+        <h3 style="margin-top:25px; color:#0c5460;">Discounts Given This Term</h3>
+        <table>
+            <tr>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Reason</th>
+                <th>Approved By</th>
+            </tr>
+            <?php foreach ($discount_history as $d): ?>
+            <tr>
+                <td><?php echo htmlspecialchars($d['date_given']); ?></td>
+                <td>UGX <?php echo number_format($d['discount_amount']); ?></td>
+                <td><?php echo htmlspecialchars($d['reason']); ?></td>
+                <td><?php echo htmlspecialchars($d['approved_by']); ?></td>
+            </tr>
+            <?php endforeach; ?>
+        </table>
+        <?php endif; ?>
 
         <?php if ($current_term && $balance > 0): ?>
         <!-- Payment form -->
