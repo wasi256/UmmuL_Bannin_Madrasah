@@ -77,7 +77,7 @@ if (isset($_GET['admission_number']) && trim($_GET['admission_number']) !== "") 
 // ------------------------------------------------------------
 // Handle payment submission
 // ------------------------------------------------------------
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['student_id'])) {
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['action'] === "record_payment") {
 
     $student_id     = $_POST['student_id'];
     $amount_paid    = $_POST['amount_paid'];
@@ -581,6 +581,7 @@ $editing_payment_id = isset($_GET['edit_payment']) ? (int)$_GET['edit_payment'] 
         <?php if ($current_term && $balance > 0): ?>
         <!-- Payment form -->
         <form method="POST" action="">
+            <input type="hidden" name="action" value="record_payment">
             <input type="hidden" name="student_id" value="<?php echo $student['student_id']; ?>">
             <input type="hidden" name="term_id" value="<?php echo $current_term['term_id']; ?>">
             <input type="hidden" name="admission_number" value="<?php echo htmlspecialchars($student['admission_number']); ?>">

@@ -89,7 +89,7 @@ a.button{display:inline-block;padding:8px 12px;background:#6c757d;color:#fff;bor
 </head>
 <body>
 <div class="container">
-    <a href="dashboard.php" class="button">&larr; Back</a>
+    <a href="dashboard.php" class="button">&larr; Back to Dashboard</a>
     <h2>Default Fees</h2>
     <?php if ($message): ?>
         <div class="message <?php echo $messageType; ?>"><?php echo htmlspecialchars($message); ?></div>

@@ -14,6 +14,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
     $conn->begin_transaction();
     try {
         $conn->query("DELETE FROM fee_payments WHERE student_id = " . intval($student_id));
+        $conn->query("DELETE FROM fee_discounts WHERE student_id = " . intval($student_id));
         $conn->query("DELETE FROM uniform_issues WHERE student_id = " . intval($student_id));
         $conn->query("DELETE FROM students WHERE student_id = " . intval($student_id));
         $conn->commit();
@@ -338,7 +339,7 @@ $editing_id = isset($_GET['edit']) ? (int)$_GET['edit'] : null;
                         <a href="?search=<?php echo urlencode($search); ?>&filter_class=<?php echo urlencode($filter_class); ?>&edit=<?php echo $s['student_id']; ?>">
                             <button type="button" class="btn-small btn-edit">Edit</button>
                         </a>
-                        <form method="POST" action="" onsubmit="return confirm('Delete <?php echo htmlspecialchars(addslashes($s['full_name'])); ?>? This also deletes all their fee payment and uniform records. This cannot be undone.');" style="display:inline;">
+                        <form method="POST" action="" onsubmit="return confirm('Delete <?php echo htmlspecialchars(addslashes($s['full_name'])); ?>? This also deletes all their fee payment, discount, and uniform records. This cannot be undone.');" style="display:inline;">
                             <input type="hidden" name="action" value="delete_student">
                             <input type="hidden" name="student_id" value="<?php echo $s['student_id']; ?>">
                             <button type="submit" class="btn-small btn-delete">Delete</button>

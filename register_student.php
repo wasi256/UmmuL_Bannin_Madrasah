@@ -42,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         );
 
         if ($stmt->execute()) {
-            $message = "Student registered successfully!";
+            $message = "Student registered successfully! <a href='manage_students.php?filter_class=" . $class_id . "' style='color:#155724; text-decoration:underline; font-weight:600;'>View all students in this class</a> or <a href='class_counts.php' style='color:#155724; text-decoration:underline; font-weight:600;'>see numbers per class</a>";
             $messageType = "success";
         } else {
             if ($conn->errno === 1062) {
@@ -88,8 +88,8 @@ $classes_result = $conn->query("SELECT class_id, class_name, section FROM classe
     .logo {
         display: block;
         margin: 0 auto 15px auto;
-        width: 250px;
-        height: 250px;
+        width: 150px;
+        height: 150px;
         object-fit: contain;
     }
     h1 {
@@ -165,14 +165,13 @@ $classes_result = $conn->query("SELECT class_id, class_name, section FROM classe
 <body>
 
 <div class="container">
-        <a href="dashboard.php" class="back-link">&larr; Back to Dashboard</a>
     <img src="logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
     <h1>Ummul Bannin Madrasah</h1>
     <p class="subtitle">Student Registration</p>
 
     <?php if ($message): ?>
         <div class="message <?php echo $messageType; ?>">
-            <?php echo htmlspecialchars($message); ?>
+            <?php echo $message; ?>
         </div>
     <?php endif; ?>
 

@@ -381,7 +381,9 @@ if ($tr && $tr->num_rows > 0) {
         <a href="dashboard.php" class="nav-link"><span class="icon">&#8962;</span> Dashboard</a>
         <a href="register_student.php" class="nav-link"><span class="icon">&#9998;</span> Register Student</a>
         <a href="manage_students.php" class="nav-link"><span class="icon">&#128101;</span> Manage Students</a>
+        <a href="class_counts.php" class="nav-link"><span class="icon">&#128203;</span> Class Numbers</a>
         <a href="fee_payment.php" class="nav-link"><span class="icon">&#128176;</span> Fee Payment</a>
+        <a href="manage_fees.php" class="nav-link"><span class="icon">&#9878;</span> Manage Fees</a>
         <a href="uniform_issue.php" class="nav-link"><span class="icon">&#128085;</span> Issue Uniform</a>
         <a href="manage_uniforms.php" class="nav-link"><span class="icon">&#128230;</span> Manage Uniforms</a>
         <a href="reports.php" class="nav-link"><span class="icon">&#128202;</span> Reports</a>
