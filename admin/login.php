@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'db_connect.php';
+include '../includes/db_connect.php';
 
 $message = "";
 $messageType = "";
@@ -93,7 +93,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </head>
 <body>
 <div class="container">
-    <img src="logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
+    <img src="../assets/images/logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
     <h1>Ummul Bannin Madrasah</h1>
     <p class="subtitle">Staff Login</p>
 

@@ -1,7 +1,7 @@
 <?php
 
-include 'auth_check.php';
-include 'db_connect.php';
+include '../includes/auth_check.php';
+include '../includes/db_connect.php';
 
 $message = "";
 $messageType = "";

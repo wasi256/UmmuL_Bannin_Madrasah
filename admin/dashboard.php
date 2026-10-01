@@ -1,6 +1,6 @@
 <?php
-include 'auth_check.php';
-include 'db_connect.php';
+include '../includes/auth_check.php';
+include '../includes/db_connect.php';
 
 // ------------------------------------------------------------
 // Real stats pulled from the database
@@ -360,6 +360,17 @@ if ($tr && $tr->num_rows > 0) {
         font-size: 14px;
     }
 
+    .nav-link.active {
+        background-color: rgba(255,255,255,0.18);
+    }
+
+    #pageFrame {
+        display: none;
+        width: 100%;
+        min-height: 600px;
+        border: none;
+    }
+
     @media (max-width: 800px) {
         body { flex-direction: column; }
         .sidebar { width: 100%; min-height: auto; }
@@ -371,14 +382,14 @@ if ($tr && $tr->num_rows > 0) {
 
 <div class="sidebar">
     <div class="sidebar-header">
-        <img src="logo.png" alt="Ummul Bannin Madrasah Badge">
+        <img src="../assets/images/logo.png" alt="Ummul Bannin Madrasah Badge">
         <h1>Ummul Bannin<br>Madrasah</h1>
     </div>
     <div class="gold-divider"></div>
 
     <div class="nav-section">
         <div class="nav-label">Navigation</div>
-        <a href="dashboard.php" class="nav-link"><span class="icon">&#8962;</span> Dashboard</a>
+        <a href="dashboard.php" class="nav-link active"><span class="icon">&#8962;</span> Dashboard</a>
         <a href="register_student.php" class="nav-link"><span class="icon">&#9998;</span> Register Student</a>
         <a href="manage_students.php" class="nav-link"><span class="icon">&#128101;</span> Manage Students</a>
         <a href="class_counts.php" class="nav-link"><span class="icon">&#128203;</span> Class Numbers</a>
@@ -409,6 +420,7 @@ if ($tr && $tr->num_rows > 0) {
         <span class="term-tag"><?php echo htmlspecialchars($term_label); ?></span>
     </div>
 
+    <div id="homeView">
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon">&#128101;</div>
@@ -484,7 +496,65 @@ if ($tr && $tr->num_rows > 0) {
             <div class="empty-state">No fee payments recorded yet. Once you record one, it'll show up here.</div>
         <?php endif; ?>
     </div>
+    </div>
+
+    <iframe id="pageFrame" title="Page content"></iframe>
 </div>
+
+<script>
+(function() {
+    const homeView = document.getElementById('homeView');
+    const frame = document.getElementById('pageFrame');
+    const navLinks = document.querySelectorAll('.nav-link, .action-btn');
+
+    function setActive(link) {
+        document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
+        if (!link) return;
+        const navLink = document.querySelector('.nav-link[href="' + link.getAttribute('href') + '"]');
+        if (navLink) navLink.classList.add('active');
+    }
+
+    function showHome(link) {
+        frame.style.display = 'none';
+        frame.src = 'about:blank';
+        homeView.style.display = '';
+        setActive(link);
+    }
+
+    function loadPage(url, link) {
+        homeView.style.display = 'none';
+        frame.style.display = 'block';
+        frame.src = url;
+        setActive(link);
+    }
+
+    navLinks.forEach(function(link) {
+        const href = link.getAttribute('href');
+        if (!href) return;
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (href === 'dashboard.php') {
+                showHome(link);
+            } else {
+                loadPage(href, link);
+            }
+        });
+    });
+
+    // Same-origin: hide each page's own "Back to Dashboard" link (redundant now
+    // that the sidebar is always visible) and auto-size the frame to its content.
+    frame.addEventListener('load', function() {
+        try {
+            const doc = frame.contentDocument;
+            if (!doc) return;
+            doc.querySelectorAll('.back-link').forEach(el => el.style.display = 'none');
+            frame.style.height = doc.documentElement.scrollHeight + 'px';
+        } catch (e) {
+            // cross-origin or blocked - leave the frame as-is
+        }
+    });
+})();
+</script>
 
 </body>
 </html>

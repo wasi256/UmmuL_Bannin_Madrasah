@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ummul Bannin Madrasah - School Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="login-screen">
+            <div class="login-container">
+                <div class="login-header">
+                    <img src="assets/images/logo.png" alt="Ummul Bannin Madrasah" class="login-logo">
+                    <h1>Ummul Bannin<br>Madrasah</h1>
+                    <p class="login-subtitle">School Management System</p>
+                </div>
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required placeholder="Enter username">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required placeholder="Enter password">
+                    </div>
+                    <div id="loginError" class="error-message"></div>
+                    <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main App (hidden until login) -->
+        <div id="mainApp" class="main-app" style="display: none;">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <img src="assets/images/logo.png" alt="Ummul Bannin Madrasah" class="sidebar-logo">
+                    <h1>Ummul Bannin<br>Madrasah</h1>
+                </div>
+                <div class="gold-divider"></div>
+                <nav class="nav-section">
+                    <div class="nav-label">Navigation</div>
+                    <a href="#" class="nav-link active" data-page="dashboard"><span class="icon">&#8962;</span> Dashboard</a>
+                    <a href="#" class="nav-link" data-page="register"><span class="icon">&#9998;</span> Register Student</a>
+                    <a href="#" class="nav-link" data-page="students"><span class="icon">&#128101;</span> Manage Students</a>
+                    <a href="#" class="nav-link" data-page="class-counts"><span class="icon">&#128203;</span> Class Numbers</a>
+                    <a href="#" class="nav-link" data-page="fee-payment"><span class="icon">&#128176;</span> Fee Payment</a>
+                    <a href="#" class="nav-link" data-page="manage-fees"><span class="icon">&#9878;</span> Manage Fees</a>
+                    <a href="#" class="nav-link" data-page="uniform-issue"><span class="icon">&#128085;</span> Issue Uniform</a>
+                    <a href="#" class="nav-link" data-page="manage-uniforms"><span class="icon">&#128230;</span> Manage Uniforms</a>
+                    <a href="#" class="nav-link" data-page="reports"><span class="icon">&#128202;</span> Reports</a>
+                    <a href="#" class="nav-link" data-page="fee-status"><span class="icon">&#127891;</span> Fee Status by Class</a>
+                    <a href="#" class="nav-link" data-page="terms"><span class="icon">&#128197;</span> Academic Terms</a>
+                    <a href="#" class="nav-link admin-only" data-page="users" style="display: none;"><span class="icon">&#128100;</span> Staff Accounts</a>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-role" id="userRole"></div>
+                    <button class="btn btn-logout" id="logoutBtn"><span>&#10162;</span> Log Out</button>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Dashboard Page -->
+                <div id="page-dashboard" class="page active">
+                    <div class="topbar">
+                        <h2>Assalamu Alaikum, <span id="welcomeName"></span></h2>
+                        <span class="term-tag" id="currentTerm">Loading...</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">&#128101;</div>
+                            <div>
+                                <div class="stat-number" id="statStudents">0</div>
+                                <div class="stat-label">Active Students</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">&#127968;</div>
+                            <div>
+                                <div class="stat-number" id="statBoarders">0</div>
+                                <div class="stat-label">Boarding Students</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">&#127970;</div>
+                            <div>
+                                <div class="stat-number" id="statDay">0</div>
+                                <div class="stat-label">Day Students</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">&#128218;</div>
+                            <div>
+                                <div class="stat-number" id="statClasses">0</div>
+                                <div class="stat-label">Classes</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" id="lowStockIcon">&#9888;</div>
+                            <div>
+                                <div class="stat-number" id="statLowStock">0</div>
+                                <div class="stat-label">Low Stock Uniforms</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-title">Quick Actions</div>
+                    <div class="actions-row">
+                        <button class="action-btn" data-page="register"><span>&#9998;</span> Register Student</button>
+                        <button class="action-btn" data-page="fee-payment"><span>&#128176;</span> Record Fee Payment</button>
+                        <button class="action-btn" data-page="uniform-issue"><span>&#128085;</span> Issue Uniform</button>
+                        <button class="action-btn" data-page="manage-uniforms"><span>&#128230;</span> Manage Stock</button>
+                    </div>
+                    <div class="section-title">Recent Fee Payments</div>
+                    <div class="panel">
+                        <div id="recentPayments"></div>
+                    </div>
+                </div>
+
+                <!-- Register Student Page -->
+                <div id="page-register" class="page">
+                    <div class="topbar"><h2>Register New Student</h2></div>
+                    <div class="panel">
+                        <form id="registerForm" class="form-grid">
+                            <div class="form-group">
+                                <label>Admission Number *</label>
+                                <input type="text" name="admission_number" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Full Name *</label>
+                                <input type="text" name="full_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Gender *</label>
+                                <select name="gender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <input type="date" name="date_of_birth">
+                            </div>
+                            <div class="form-group">
+                                <label>Class *</label>
+                                <select name="class_id" id="registerClassSelect" required>
+                                    <option value="">Select Class</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Student Type</label>
+                                <select name="is_boarder">
+                                    <option value="false">Day Student</option>
+                                    <option value="true">Boarding Student</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Guardian Name</label>
+                                <input type="text" name="guardian_name">
+                            </div>
+                            <div class="form-group">
+                                <label>Guardian Phone</label>
+                                <input type="tel" name="guardian_phone">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Register Student</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Manage Students Page -->
+                <div id="page-students" class="page">
+                    <div class="topbar"><h2>Manage Students</h2></div>
+                    <div class="panel">
+                        <div class="table-container">
+                            <table id="studentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Admission #</th>
+                                        <th>Name</th>
+                                        <th>Class</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fee Payment Page -->
+                <div id="page-fee-payment" class="page">
+                    <div class="topbar"><h2>Record Fee Payment</h2></div>
+                    <div class="panel">
+                        <form id="feePaymentForm" class="form-grid">
+                            <div class="form-group">
+                                <label>Student *</label>
+                                <select name="student_id" id="feeStudentSelect" required>
+                                    <option value="">Select Student</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Term *</label>
+                                <select name="term_id" id="feeTermSelect" required>
+                                    <option value="">Select Term</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Amount (UGX) *</label>
+                                <input type="number" name="amount_paid" required min="0" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Payment Method</label>
+                                <select name="payment_method">
+                                    <option value="Cash">Cash</option>
+                                    <option value="Mobile Money">Mobile Money</option>
+                                    <option value="Bank">Bank</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Received By</label>
+                                <input type="text" name="received_by">
+                            </div>
+                            <div class="form-group">
+                                <label>Receipt Number</label>
+                                <input type="text" name="receipt_number">
+                            </div>
+                            <div class="form-group">
+                                <label>Notes</label>
+                                <textarea name="notes" rows="2"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Record Payment</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Reports Page -->
+                <div id="page-reports" class="page">
+                    <div class="topbar"><h2>Reports</h2></div>
+                    <div class="panel">
+                        <h3>Student Balances</h3>
+                        <div class="table-container">
+                            <table id="balancesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Admission #</th>
+                                        <th>Name</th>
+                                        <th>Class</th>
+                                        <th>Total Due</th>
+                                        <th>Total Paid</th>
+                                        <th>Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fee Status by Class Page -->
+                <div id="page-fee-status" class="page">
+                    <div class="topbar"><h2>Fee Status by Class</h2></div>
+                    <div class="panel">
+                        <div class="table-container">
+                            <table id="classFeeTable">
+                                <thead>
+                                    <tr>
+                                        <th>Class</th>
+                                        <th>Section</th>
+                                        <th>Term Fee</th>
+                                        <th>Students</th>
+                                        <th>Total Collected</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Terms Page -->
+                <div id="page-terms" class="page">
+                    <div class="topbar"><h2>Academic Terms</h2></div>
+                    <div class="panel">
+                        <form id="termForm" class="form-inline">
+                            <div class="form-group">
+                                <label>Academic Year</label>
+                                <input type="number" name="academic_year" value="2026" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Term Number</label>
+                                <select name="term_number" required>
+                                    <option value="1">Term 1</option>
+                                    <option value="2">Term 2</option>
+                                    <option value="3" selected>Term 3</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Set as Current</label>
+                                <input type="checkbox" name="is_current" checked>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Term</button>
+                        </form>
+                        <div class="table-container" style="margin-top: 20px;">
+                            <table id="termsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Year</th>
+                                        <th>Term</th>
+                                        <th>Current</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Class Counts Page -->
+                <div id="page-class-counts" class="page">
+                    <div class="topbar"><h2>Class Numbers</h2></div>
+                    <div class="panel">
+                        <div class="table-container">
+                            <table id="classCountsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Class</th>
+                                        <th>Section</th>
+                                        <th>Students</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manage Uniforms Page -->
+                <div id="page-manage-uniforms" class="page">
+                    <div class="topbar"><h2>Manage Uniforms</h2></div>
+                    <div class="panel">
+                        <div class="table-container">
+                            <table id="uniformsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Section</th>
+                                        <th>Gender</th>
+                                        <th>Price</th>
+                                        <th>Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Issue Uniform Page -->
+                <div id="page-uniform-issue" class="page">
+                    <div class="topbar"><h2>Issue Uniform</h2></div>
+                    <div class="panel">
+                        <form id="uniformIssueForm" class="form-grid">
+                            <div class="form-group">
+                                <label>Student *</label>
+                                <select name="student_id" id="uniformStudentSelect" required>
+                                    <option value="">Select Student</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Uniform Item *</label>
+                                <select name="uniform_id" id="uniformItemSelect" required>
+                                    <option value="">Select Item</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Quantity *</label>
+                                <input type="number" name="quantity" value="1" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Total Price (UGX) *</label>
+                                <input type="number" name="total_price" required min="0" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Amount Paid (UGX) *</label>
+                                <input type="number" name="amount_paid" required min="0" step="0.01">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Issue Uniform</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Manage Fees Page -->
+                <div id="page-manage-fees" class="page">
+                    <div class="topbar"><h2>Manage Fees</h2></div>
+                    <div class="panel">
+                        <div class="table-container">
+                            <table id="feesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Class</th>
+                                        <th>Section</th>
+                                        <th>Term Fee</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Staff Accounts Page (Admin only) -->
+                <div id="page-users" class="page">
+                    <div class="topbar"><h2>Staff Accounts</h2></div>
+                    <div class="panel">
+                        <form id="userForm" class="form-inline">
+                            <div class="form-group">
+                                <label>Username</label>
+                                <input type="text" name="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Password</label>
+                                <input type="password" name="password" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" name="full_name">
+                            </div>
+                            <div class="form-group">
+                                <label>Role</label>
+                                <select name="role">
+                                    <option value="Accountant">Accountant</option>
+                                    <option value="Teacher">Teacher</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Create User</button>
+                        </form>
+                        <div class="table-container" style="margin-top: 20px;">
+                            <table id="usersTable">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Full Name</th>
+                                        <th>Role</th>
+                                        <th>Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

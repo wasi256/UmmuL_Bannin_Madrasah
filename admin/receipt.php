@@ -1,6 +1,6 @@
 <?php
-include 'auth_check.php';
-include 'db_connect.php';
+include '../includes/auth_check.php';
+include '../includes/db_connect.php';
 
 $payment = null;
 
@@ -182,7 +182,7 @@ $balance = $due - $total_paid;
 <body>
 <div class="receipt">
     <div class="receipt-header">
-        <img src="logo.png" alt="Ummul Bannin Madrasah Badge">
+        <img src="../assets/images/logo.png" alt="Ummul Bannin Madrasah Badge">
         <h1>Ummul Bannin Madrasah</h1>
         <div class="tagline">Through Hard Work We Toil</div>
     </div>

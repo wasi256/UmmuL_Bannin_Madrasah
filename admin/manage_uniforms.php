@@ -1,6 +1,6 @@
 <?php
-include 'auth_check.php';
-include 'db_connect.php';
+include '../includes/auth_check.php';
+include '../includes/db_connect.php';
 
 $message = "";
 $messageType = "";
@@ -231,7 +231,7 @@ $editing_id = isset($_GET['edit']) ? (int)$_GET['edit'] : null;
 
 <div class="container">
         <a href="dashboard.php" class="back-link">&larr; Back to Dashboard</a>
-    <img src="logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
+    <img src="../assets/images/logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
     <h1>Ummul Bannin Madrasah</h1>
     <p class="subtitle">Manage Uniforms</p>
 

@@ -1,6 +1,6 @@
 <?php
-include 'auth_check.php';
-include 'db_connect.php';
+include '../includes/auth_check.php';
+include '../includes/db_connect.php';
 
 $student = null;
 $total_due = 0;
@@ -447,7 +447,7 @@ $editing_payment_id = isset($_GET['edit_payment']) ? (int)$_GET['edit_payment'] 
 <body>
 
 <div class="container">
-    <img src="logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
+    <img src="../assets/images/logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
     <h1>Ummul Bannin Madrasah</h1>
     <p class="subtitle">Fee Payment</p>
 

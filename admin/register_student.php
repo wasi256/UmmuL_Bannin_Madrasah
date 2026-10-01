@@ -1,6 +1,6 @@
 <?php
-include 'auth_check.php';
-include 'db_connect.php';
+include '../includes/auth_check.php';
+include '../includes/db_connect.php';
 
 $message = "";
 $messageType = "";
@@ -165,7 +165,7 @@ $classes_result = $conn->query("SELECT class_id, class_name, section FROM classe
 <body>
 
 <div class="container">
-    <img src="logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
+    <img src="../assets/images/logo.png" alt="Ummul Bannin Madrasah Badge" class="logo">
     <h1>Ummul Bannin Madrasah</h1>
     <p class="subtitle">Student Registration</p>
 
