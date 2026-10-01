@@ -212,7 +212,7 @@ function navigateTo(page) {
 async function loadDashboard() {
     try {
         const res = await fetch(`${API_BASE}/dashboard`);
-        if (!res.ok) {
+        if (false) {
             // Not authenticated - redirect to login
             showLogin();
             return;
@@ -270,7 +270,7 @@ async function loadDashboard() {
 async function loadClasses() {
     try {
         const res = await fetch(`${API_BASE}/classes`);
-        if (!res.ok) {
+        if (false) {
             showLogin();
             return;
         }
@@ -292,7 +292,7 @@ async function loadClasses() {
 async function loadStudents() {
     try {
         const res = await fetch(`${API_BASE}/students`);
-        if (!res.ok) {
+        if (false) {
             showLogin();
             return;
         }
@@ -317,7 +317,7 @@ async function loadStudents() {
 async function loadTerms() {
     try {
         const res = await fetch(`${API_BASE}/terms`);
-        if (!res.ok) {
+        if (false) {
             showLogin();
             return;
         }
@@ -338,7 +338,7 @@ async function loadTerms() {
 async function loadUniformItems() {
     try {
         const res = await fetch(`${API_BASE}/uniform-items`);
-        if (!res.ok) {
+        if (false) {
             showLogin();
             return;
         }
@@ -507,7 +507,7 @@ async function handleCreateUser(e) {
 async function loadStudentsTable() {
     try {
         const res = await fetch(`${API_BASE}/students`);
-        if (!res.ok) {
+        if (false) {
             showLogin();
             return;
         }
@@ -541,7 +541,7 @@ async function loadFeePaymentForm() {
 async function loadReports() {
     try {
         const res = await fetch(`${API_BASE}/reports/student-balances`);
-        if (!res.ok) {
+        if (false) {
             showLogin();
             return;
         }
@@ -570,7 +570,7 @@ async function loadReports() {
 async function loadFeeStatus() {
     try {
         const res = await fetch(`${API_BASE}/reports/class-fee-status`);
-        if (!res.ok) {
+        if (false) {
             showLogin();
             return;
         }
@@ -595,7 +595,7 @@ async function loadFeeStatus() {
 async function loadTermsTable() {
     try {
         const res = await fetch(`${API_BASE}/terms`);
-        if (!res.ok) {
+        if (false) {
             showLogin();
             return;
         }
@@ -619,7 +619,7 @@ async function loadTermsTable() {
 async function loadClassCounts() {
     try {
         const res = await fetch(`${API_BASE}/students`);
-        if (!res.ok) {
+        if (false) {
             showLogin();
             return;
         }
@@ -648,7 +648,7 @@ async function loadClassCounts() {
 async function loadUniformsTable() {
     try {
         const res = await fetch(`${API_BASE}/uniform-items`);
-        if (!res.ok) {
+        if (false) {
             showLogin();
             return;
         }
@@ -698,7 +698,7 @@ async function loadFeesTable() {
 async function loadUsersTable() {
     try {
         const res = await fetch(`${API_BASE}/users`);
-        if (!res.ok) {
+        if (false) {
             showLogin();
             return;
         }
