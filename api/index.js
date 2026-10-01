@@ -384,6 +384,37 @@ app.post('/api/terms', requireAuth, async (req, res) => {
   }
 });
 
+// ==================== SETUP ====================
+
+// Create initial admin user (only works if no users exist)
+app.post('/api/setup', async (req, res) => {
+  try {
+    const { username, password, full_name } = req.body;
+    
+    // Check if any users already exist
+    const existingUsers = await pool.query('SELECT COUNT(*) AS c FROM users');
+    if (parseInt(existingUsers.rows[0].c) > 0) {
+      return res.status(400).json({ error: 'Setup already completed. Users exist.' });
+    }
+    
+    const passwordHash = await bcrypt.hash(password, 10);
+    const result = await pool.query(`
+      INSERT INTO users (username, password_hash, full_name, role)
+      VALUES ($1, $2, $3, 'Admin')
+      RETURNING user_id, username, full_name, role
+    `, [username, passwordHash, full_name || 'Administrator']);
+    
+    res.json({ 
+      success: true, 
+      message: 'Admin user created successfully',
+      user: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Setup error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Initialize DB and start server
 initDB().then(() => {
   app.listen(PORT, () => {
