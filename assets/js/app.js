@@ -212,13 +212,18 @@ function navigateTo(page) {
 async function loadDashboard() {
     try {
         const res = await fetch(`${API_BASE}/dashboard`);
+        if (!res.ok) {
+            // Not authenticated - redirect to login
+            showLogin();
+            return;
+        }
         const data = await res.json();
         
-        document.getElementById('statStudents').textContent = data.total_students;
-        document.getElementById('statBoarders').textContent = data.total_boarders;
-        document.getElementById('statDay').textContent = data.total_day;
-        document.getElementById('statClasses').textContent = data.total_classes;
-        document.getElementById('statLowStock').textContent = data.low_stock_items;
+        document.getElementById('statStudents').textContent = data.total_students || 0;
+        document.getElementById('statBoarders').textContent = data.total_boarders || 0;
+        document.getElementById('statDay').textContent = data.total_day || 0;
+        document.getElementById('statClasses').textContent = data.total_classes || 0;
+        document.getElementById('statLowStock').textContent = data.low_stock_items || 0;
         
         if (data.current_term) {
             document.getElementById('currentTerm').textContent = 
@@ -257,6 +262,7 @@ async function loadDashboard() {
         }
     } catch (err) {
         console.error('Dashboard load error:', err);
+        showLogin();
     }
 }
 
@@ -264,6 +270,10 @@ async function loadDashboard() {
 async function loadClasses() {
     try {
         const res = await fetch(`${API_BASE}/classes`);
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
         classes = await res.json();
         
         // Populate class selects
@@ -274,6 +284,7 @@ async function loadClasses() {
         }
     } catch (err) {
         console.error('Classes load error:', err);
+        showLogin();
     }
 }
 
@@ -281,6 +292,10 @@ async function loadClasses() {
 async function loadStudents() {
     try {
         const res = await fetch(`${API_BASE}/students`);
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
         students = await res.json();
         
         // Populate student selects
@@ -294,6 +309,7 @@ async function loadStudents() {
         if (uniformSelect) uniformSelect.innerHTML = options;
     } catch (err) {
         console.error('Students load error:', err);
+        showLogin();
     }
 }
 
@@ -301,6 +317,10 @@ async function loadStudents() {
 async function loadTerms() {
     try {
         const res = await fetch(`${API_BASE}/terms`);
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
         terms = await res.json();
         
         const feeTermSelect = document.getElementById('feeTermSelect');
@@ -310,6 +330,7 @@ async function loadTerms() {
         }
     } catch (err) {
         console.error('Terms load error:', err);
+        showLogin();
     }
 }
 
@@ -317,15 +338,20 @@ async function loadTerms() {
 async function loadUniformItems() {
     try {
         const res = await fetch(`${API_BASE}/uniform-items`);
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
         uniformItems = await res.json();
         
         const uniformItemSelect = document.getElementById('uniformItemSelect');
         if (uniformItemSelect) {
             uniformItemSelect.innerHTML = '<option value="">Select Item</option>' +
-                uniformItems.map(u => `<option value="${u.uniform_id}">${escapeHtml(u.item_name)} - UGX ${formatNumber(u.price)}</option>`).join('');
+                uniformItems.map(u => `<option value="${u.uniform_id}">${escapeHtml(u.item_name)} - UGiventNumber'>' - UGX ${formatNumber(u.price)}</option>`).join('');
         }
     } catch (err) {
         console.error('Uniform items load error:', err);
+        showLogin();
     }
 }
 
@@ -481,6 +507,10 @@ async function handleCreateUser(e) {
 async function loadStudentsTable() {
     try {
         const res = await fetch(`${API_BASE}/students`);
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
         const students = await res.json();
         
         const tbody = document.querySelector('#studentsTable tbody');
@@ -498,6 +528,7 @@ async function loadStudentsTable() {
         `).join('');
     } catch (err) {
         console.error('Students table error:', err);
+        showLogin();
     }
 }
 
@@ -510,6 +541,10 @@ async function loadFeePaymentForm() {
 async function loadReports() {
     try {
         const res = await fetch(`${API_BASE}/reports/student-balances`);
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
         const balances = await res.json();
         
         const tbody = document.querySelector('#balancesTable tbody');
@@ -527,6 +562,7 @@ async function loadReports() {
         `).join('');
     } catch (err) {
         console.error('Reports error:', err);
+        showLogin();
     }
 }
 
@@ -534,6 +570,10 @@ async function loadReports() {
 async function loadFeeStatus() {
     try {
         const res = await fetch(`${API_BASE}/reports/class-fee-status`);
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
         const data = await res.json();
         
         const tbody = document.querySelector('#classFeeTable tbody');
@@ -555,6 +595,10 @@ async function loadFeeStatus() {
 async function loadTermsTable() {
     try {
         const res = await fetch(`${API_BASE}/terms`);
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
         const terms = await res.json();
         
         const tbody = document.querySelector('#termsTable tbody');
@@ -567,6 +611,7 @@ async function loadTermsTable() {
         `).join('');
     } catch (err) {
         console.error('Terms table error:', err);
+        showLogin();
     }
 }
 
@@ -574,6 +619,10 @@ async function loadTermsTable() {
 async function loadClassCounts() {
     try {
         const res = await fetch(`${API_BASE}/students`);
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
         const students = await res.json();
         
         const classCounts = {};
@@ -599,6 +648,10 @@ async function loadClassCounts() {
 async function loadUniformsTable() {
     try {
         const res = await fetch(`${API_BASE}/uniform-items`);
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
         const items = await res.json();
         
         const tbody = document.querySelector('#uniformsTable tbody');
@@ -613,6 +666,7 @@ async function loadUniformsTable() {
         `).join('');
     } catch (err) {
         console.error('Uniforms table error:', err);
+        showLogin();
     }
 }
 
@@ -644,6 +698,10 @@ async function loadFeesTable() {
 async function loadUsersTable() {
     try {
         const res = await fetch(`${API_BASE}/users`);
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
         const users = await res.json();
         
         const tbody = document.querySelector('#usersTable tbody');
@@ -657,6 +715,7 @@ async function loadUsersTable() {
         `).join('');
     } catch (err) {
         console.error('Users table error:', err);
+        showLogin();
     }
 }
 
