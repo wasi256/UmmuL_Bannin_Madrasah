@@ -93,6 +93,7 @@ function setupEventListeners() {
 // Handle login
 async function handleLogin(e) {
     e.preventDefault();
+    loginError.style.display = 'none';
     loginError.textContent = '';
     
     const username = document.getElementById('username').value;
@@ -105,16 +106,27 @@ async function handleLogin(e) {
             body: JSON.stringify({ username, password })
         });
         
-        const data = await res.json();
+        // Always try to parse JSON, even on error status
+        let data;
+        try {
+            data = await res.json();
+        } catch (e) {
+            // If response is not JSON (e.g., HTML error page)
+            loginError.textContent = 'Server returned unexpected response';
+            loginError.style.display = 'block';
+            return;
+        }
         
         if (res.ok && data.success) {
             currentUser = data.user;
             showMainApp();
         } else {
-            loginError.textContent = data.error || 'Login failed';
+            loginError.textContent = data.error || 'Login failed - incorrect username or password';
+            loginError.style.display = 'block';
         }
     } catch (err) {
-        loginError.textContent = 'Connection error. Please try again.';
+        loginError.textContent = 'Connection error - check internet connection';
+        loginError.style.display = 'block';
         console.error('Login error:', err);
     }
 }
