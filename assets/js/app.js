@@ -9,6 +9,7 @@ let classes = [];
 let students = [];
 let terms = [];
 let uniformItems = [];
+let recentPaymentsData = [];
 
 // DOM Elements
 const loginScreen = document.getElementById('loginScreen');
@@ -233,6 +234,7 @@ async function loadDashboard() {
         // Recent payments
         const paymentsEl = document.getElementById('recentPayments');
         if (data.recent_payments && data.recent_payments.length > 0) {
+            recentPaymentsData = data.recent_payments;  // Store globally
             paymentsEl.innerHTML = `
                 <table>
                     <thead>
@@ -252,6 +254,10 @@ async function loadDashboard() {
                                 <td>UGX ${formatNumber(p.amount_paid)}</td>
                                 <td>${p.date_paid}</td>
                                 <td>${escapeHtml(p.receipt_number || '-')}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="editFeePayment(${p.payment_id})">Edit</button>
+                                    <button class="btn btn-sm btn-success" onclick="addDiscount(${p.payment_id})">Discount</button>
+                                </td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -413,16 +419,77 @@ async function handleFeePayment(e) {
     }
 }
 
+// Handle fee payment edit
+async function editFeePayment(id) {
+    const payment = recentPaymentsData.find(p => p.payment_id === id);
+    if (!payment) {
+        alert('Payment not found');
+        return;
+    }
+    const amount = prompt('Enter new amount paid (UGX):', payment.amount_paid);
+    if (amount === null || amount === '') return;
+    
+    const receipt = prompt('Enter new receipt number (or leave blank):', payment.receipt_number || '');
+    
+    if (confirm('Mark this payment as partial/waived?')) {
+        // Create a discount instead
+        const reason = prompt('Enter reason for discount (e.g., "Financial hardship", "Orphanage support"):');
+        if (!reason) return;
+        
+        fetch(`${API_BASE}/fee-discounts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                student_id: payment.student_id,
+                term_id: payment.term_id,
+                discount_amount: payment.amount_paid,
+                reason: reason,
+                approved_by: '<?= $_SESSION['full_name'] ?? 'Admin' ?>'
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Discount created successfully');
+                loadDashboard();
+                loadRecentPayments();
+            } else {
+                alert('Failed to create discount: ' + (data.error || 'unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Discount error:', err);
+            alert('Error creating discount');
+        });
+    } else {
+        // Just update the payment amount
+        fetch(`${API_BASE}/fee-payments/${payment.payment_id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount_paid: parseFloat(amount),
+                receipt_number: receipt || payment.receipt_number
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Payment updated successfully');
+                loadDashboard();
+                loadRecentPayments();
+            } else {
+                alert('Failed to update payment: ' + (data.error || 'unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Edit payment error:', err);
+            alert('Error editing payment');
+        });
+    }
+}
+
 // Handle uniform issue
 async function handleUniformIssue(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
-    data.student_id = parseInt(data.student_id);
-    data.uniform_id = parseInt(data.uniform_id);
-    data.quantity = parseInt(data.quantity);
-    data.total_price = parseFloat(data.total_price);
-    data.amount_paid = parseFloat(data.amount_paid);
     
     try {
         const res = await fetch(`${API_BASE}/uniform-issues`, {
@@ -522,6 +589,7 @@ async function loadStudentsTable() {
                 <td>${s.is_boarder ? 'Boarding' : 'Day'}</td>
                 <td>${escapeHtml(s.status)}</td>
                 <td>
+                    <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.student_id})">Delete</button>
                     <button class="btn btn-sm btn-primary" onclick="editStudent(${s.student_id})">Edit</button>
                 </td>
             </tr>
@@ -731,7 +799,48 @@ function formatNumber(num) {
     return new Intl.NumberFormat('en-UG').format(num || 0);
 }
 
-// Edit student (placeholder)
+// Edit student
 function editStudent(id) {
-    alert('Edit functionality - Student ID: ' + id);
+    const student = studentsData.find(s => s.student_id === id);
+    if (!student) {
+        alert('Student not found');
+        return;
+    }
+    const formData = {
+        admission_number: student.admission_number,
+        full_name: student.full_name,
+        gender: student.gender,
+        date_of_birth: student.date_of_birth || '',
+        class_id: student.class_id,
+        is_boarder: student.is_boarder,
+        guardian_name: student.guardian_name || '',
+        guardian_phone: student.guardian_phone || '',
+        status: student.status
+    };
+    // Populate form fields (you'd need to add a modal/form for this)
+    alert('Edit Student ID: ' + id + '\\n\\nData: ' + JSON.stringify(formData));
+}
+
+// Delete student
+function deleteStudent(id) {
+    if (confirm('Are you sure you want to delete this student?')) {
+        fetch(`${API_BASE}/students/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Student deleted successfully');
+                loadStudentsTable();
+                loadStudents();
+            } else {
+                alert('Failed to delete student');
+            }
+        })
+        .catch(err => {
+            console.error('Delete error:', err);
+            alert('Error deleting student');
+        });
+    }
 }

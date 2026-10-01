@@ -242,6 +242,45 @@ app.post('/api/fee-payments', async (req, res) => {
   }
 });
 
+// ==================== EDIT FEE PAYMENT ====================
+
+app.put('/api/fee-payments/:id', requireAuth, async (req, res) => {
+  try {
+    const { amount_paid, payment_method, received_by, receipt_number, notes } = req.body;
+    const result = await pool.query(`
+      UPDATE fee_payments 
+      SET amount_paid = COALESCE($1, amount_paid),
+          payment_method = COALESCE($2, payment_method),
+          received_by = COALESCE($3, received_by),
+          receipt_number = COALESCE($4, receipt_number),
+          notes = COALESCE($5, notes)
+      WHERE payment_id = $6
+      RETURNING *
+    `, [amount_paid, payment_method, received_by, receipt_number, notes, req.params.id]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Update fee payment error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ==================== FEE DISCOUNTS / WAIVERS ====================
+
+app.post('/api/fee-discounts', requireAuth, async (req, res) => {
+  try {
+    const { student_id, term_id, discount_amount, reason, approved_by } = req.body;
+    const result = await pool.query(`
+      INSERT INTO fee_discounts (student_id, term_id, discount_amount, reason, approved_by)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `, [student_id, term_id, discount_amount, reason, approved_by]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Create fee discount error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ==================== UNIFORMS ====================
 
 app.get('/api/uniform-items', async (req, res) => {
