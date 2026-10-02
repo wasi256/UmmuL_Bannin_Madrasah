@@ -26,3 +26,5 @@ build/
 
 # Test
 test.php
+.vercel
+.env*

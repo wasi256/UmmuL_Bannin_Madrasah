@@ -288,22 +288,61 @@ async function loadDashboard() {
 async function loadClasses() {
     try {
         const res = await fetch(`${API_BASE}/classes`);
-        if (false) {
-            showLogin();
-            return;
+        if (res.ok) {
+            classes = await res.json();
         }
-        classes = await res.json();
         
-        // Populate class selects
+        // Populate class selects - with fallback hardcoded classes if needed
         const registerSelect = document.getElementById('registerClassSelect');
         if (registerSelect) {
-            registerSelect.innerHTML = '<option value="">Select Class</option>' +
-                classes.map(c => `<option value="${c.class_id}">${escapeHtml(c.class_name)} (${escapeHtml(c.section)})</option>`).join('');
+            // Use API data if available, otherwise use fallback
+            let classOptions = '';
+            if (classes && classes.length > 0) {
+                classOptions = classes.map(c => `<option value="${c.class_id}">${escapeHtml(c.class_name)} (${escapeHtml(c.section)})</option>`).join('');
+            } else {
+                // Fallback: Hardcoded classes if API returns empty
+                const fallbackClasses = [
+                  { class_id: 1, class_name: 'Baby Class', section: 'Nursery' },
+                  { class_id: 2, class_name: 'Middle Class', section: 'Nursery' },
+                  { class_id: 3, class_name: 'Top Class', section: 'Nursery' },
+                  { class_id: 4, class_name: 'P.1', section: 'Lower Primary' },
+                  { class_id: 5, class_name: 'P.2', section: 'Lower Primary' },
+                  { class_id: 6, class_name: 'P.3', section: 'Lower Primary' },
+                  { class_id: 7, class_name: 'P.4', section: 'Lower Primary' },
+                  { class_id: 8, class_name: 'P.5', section: 'Upper Primary' },
+                  { class_id: 9, class_name: 'P.6', section: 'Upper Primary' },
+                  { class_id: 10, class_name: 'P.7', section: 'Upper Primary' }
+                ];
+                classOptions = fallbackClasses.map(c => `<option value="${c.class_id}">${escapeHtml(c.class_name)} (${escapeHtml(c.section)})</option>`).join('');
+            }
+            registerSelect.innerHTML = '<option value="">Select Class</option>' + classOptions;
         }
     } catch (err) {
         console.error('Classes load error:', err);
-        showLogin();
+        // Fallback on error
+        showFallbackClasses();
     }
+}
+
+// Fallback function to populate classes
+function showFallbackClasses() {
+  const fallbackClasses = [
+    { class_id: 1, class_name: 'Baby Class', section: 'Nursery' },
+    { class_id: 2, class_name: 'Middle Class', section: 'Nursery' },
+    { class_id: 3, class_name: 'Top Class', section: 'Nursery' },
+    { class_id: 4, class_name: 'P.1', section: 'Lower Primary' },
+    { class_id: 5, class_name: 'P.2', section: 'Lower Primary' },
+    { class_id: 5, class_name: 'P.3', section: 'Lower Primary' },
+    { class_id: 6, class_name: 'P.4', section: 'Lower Primary' },
+    { class_id: 6, class_name: 'P.5', section: 'Upper Primary' },
+    { class_id: 7, class_name: 'P.6', section: 'Upper Primary' },
+    { class_id: 7, class_name: 'P.7', section: 'Upper Primary' }
+  ];
+  const registerSelect = document.getElementById('registerClassSelect');
+  if (registerSelect) {
+    registerSelect.innerHTML = '<option value="">Select Class</option>' +
+      fallbackClasses.map(c => `<option value="${c.class_id}">${escapeHtml(c.class_name)} (${escapeHtml(c.section)})</option>`).join('');
+  }
 }
 
 // Load students
