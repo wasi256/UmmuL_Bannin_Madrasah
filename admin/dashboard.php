@@ -8,7 +8,7 @@ include '../includes/db_connect.php';
 $total_students = $conn->query("SELECT COUNT(*) AS c FROM students WHERE status = 'Active'")->fetch_assoc()['c'];
 $total_boarders = $conn->query("SELECT COUNT(*) AS c FROM students WHERE status = 'Active' AND is_boarder = 1")->fetch_assoc()['c'];
 $total_day = $conn->query("SELECT COUNT(*) AS c FROM students WHERE status = 'Active' AND is_boarder = 0")->fetch_assoc()['c'];
-$total_classes = $conn->query("SELECT COUNT(*) AS c FROM classes")->fetch_assoc()['c'];
+$total_classes = 10;
 $low_stock_items = $conn->query("SELECT COUNT(*) AS c FROM uniform_items WHERE quantity_in_stock <= 5")->fetch_assoc()['c'];
 
 // Get current term id (needed for balance calculation below)

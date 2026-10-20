@@ -8,12 +8,13 @@ include '../includes/db_connect.php';
 $class_counts = [];
 $total_students = 0;
 
-$result = $conn->query("SELECT c.class_id, c.class_name, c.section, 
-                         COUNT(s.student_id) AS student_count 
-                         FROM classes c 
-                         LEFT JOIN students s ON s.class_id = c.class_id AND s.status = 'Active' 
-                         GROUP BY c.class_id 
-                         ORDER BY c.class_id ASC");
+$result = $conn->query("SELECT MIN(c.class_id) AS class_id, MIN(c.class_name) AS class_name, MIN(c.section) AS section,
+                         COUNT(DISTINCT s.student_id) AS student_count
+                         FROM classes c
+                         LEFT JOIN students s ON s.class_id = c.class_id AND s.status = 'Active'
+                         WHERE (LOWER(TRIM(c.class_name)), LOWER(TRIM(c.section))) IN (('baby class', 'nursery'), ('middle class', 'nursery'), ('top class', 'nursery'), ('p.1', 'lower primary'), ('p.2', 'lower primary'), ('p.3', 'lower primary'), ('p.4', 'lower primary'), ('p.5', 'upper primary'), ('p.6', 'upper primary'), ('p.7', 'upper primary'))
+                         GROUP BY LOWER(TRIM(c.class_name)), LOWER(TRIM(c.section))
+                         ORDER BY MIN(c.class_id) ASC");
 while ($row = $result->fetch_assoc()) {
     $class_counts[] = $row;
     $total_students += $row['student_count'];

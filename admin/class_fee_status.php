@@ -18,11 +18,18 @@ if ($br && $br->num_rows > 0) {
 }
 
 // All classes for the dropdown
-$all_classes = [];
-$cr = $conn->query("SELECT class_id, class_name, section FROM classes ORDER BY class_id");
-while ($row = $cr->fetch_assoc()) {
-    $all_classes[] = $row;
-}
+$all_classes = [
+    ['class_id' => 1, 'class_name' => 'Baby Class', 'section' => 'Nursery'],
+    ['class_id' => 2, 'class_name' => 'Middle Class', 'section' => 'Nursery'],
+    ['class_id' => 3, 'class_name' => 'Top Class', 'section' => 'Nursery'],
+    ['class_id' => 4, 'class_name' => 'P.1', 'section' => 'Lower Primary'],
+    ['class_id' => 5, 'class_name' => 'P.2', 'section' => 'Lower Primary'],
+    ['class_id' => 6, 'class_name' => 'P.3', 'section' => 'Lower Primary'],
+    ['class_id' => 7, 'class_name' => 'P.4', 'section' => 'Lower Primary'],
+    ['class_id' => 8, 'class_name' => 'P.5', 'section' => 'Upper Primary'],
+    ['class_id' => 9, 'class_name' => 'P.6', 'section' => 'Upper Primary'],
+    ['class_id' => 10, 'class_name' => 'P.7', 'section' => 'Upper Primary'],
+];
 
 $selected_class_id = isset($_GET['class_id']) && $_GET['class_id'] !== "" ? (int)$_GET['class_id'] : null;
 $selected_class = null;
@@ -34,15 +41,20 @@ if ($selected_class_id && $current_term) {
     foreach ($all_classes as $c) {
         if ($c['class_id'] == $selected_class_id) {
             $selected_class = $c;
+            break;
         }
     }
 
-    $stmt = $conn->prepare("SELECT s.student_id, s.admission_number, s.full_name, s.is_boarder, c.term_fee 
+    $selected_class_name = $selected_class['class_name'] ?? '';
+    $selected_class_section = $selected_class['section'] ?? '';
+
+        $stmt = $conn->prepare("SELECT s.student_id, s.admission_number, s.full_name, s.is_boarder, c.term_fee
                              FROM students s 
                              JOIN classes c ON s.class_id = c.class_id 
-                             WHERE s.class_id = ? AND s.status = 'Active' 
+                             WHERE s.class_id = ?
+                               AND s.status = 'Active'
                              ORDER BY s.full_name ASC");
-    $stmt->bind_param("i", $selected_class_id);
+        $stmt->bind_param("i", $selected_class_id);
     $stmt->execute();
     $result = $stmt->get_result();
 

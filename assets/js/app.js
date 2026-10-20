@@ -106,14 +106,13 @@ async function handleLogin(e) {
             body: JSON.stringify({ username, password })
         });
         
-        // Always try to parse JSON, even on error status
         let data;
         try {
             data = await res.json();
         } catch (e) {
-            // If response is not JSON (e.g., HTML error page)
-            loginError.textContent = 'Server returned unexpected response';
+            loginError.textContent = 'Server returned unexpected response format';
             loginError.style.display = 'block';
+            console.error('Non-JSON response:', await res.text());
             return;
         }
         
@@ -123,6 +122,7 @@ async function handleLogin(e) {
         } else {
             loginError.textContent = data.error || 'Login failed - incorrect username or password';
             loginError.style.display = 'block';
+            console.log('Login failed:', data);
         }
     } catch (err) {
         loginError.textContent = 'Connection error - check internet connection';
@@ -194,6 +194,9 @@ function navigateTo(page) {
         case 'fee-payment':
             loadFeePaymentForm();
             break;
+        case 'fee-receipts':
+            loadFeeReceipts();
+            break;
         case 'reports':
             loadReports();
             break;
@@ -235,7 +238,7 @@ async function loadDashboard() {
         document.getElementById('statStudents').textContent = data.total_students || 0;
         document.getElementById('statBoarders').textContent = data.total_boarders || 0;
         document.getElementById('statDay').textContent = data.total_day || 0;
-        document.getElementById('statClasses').textContent = data.total_classes || 0;
+        document.getElementById('statClasses').textContent = 10;
         document.getElementById('statLowStock').textContent = data.low_stock_items || 0;
         
         if (data.current_term) {
@@ -256,6 +259,7 @@ async function loadDashboard() {
                             <th>Amount</th>
                             <th>Date</th>
                             <th>Receipt #</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -267,6 +271,7 @@ async function loadDashboard() {
                                 <td>${p.date_paid}</td>
                                 <td>${escapeHtml(p.receipt_number || '-')}</td>
                                 <td>
+                                    <button class="btn btn-sm btn-success" onclick="printFeeReceipt(${p.payment_id})">Print Receipt</button>
                                     <button class="btn btn-sm btn-primary" onclick="editFeePayment(${p.payment_id})">Edit</button>
                                     <button class="btn btn-sm btn-success" onclick="addDiscount(${p.payment_id})">Discount</button>
                                 </td>
@@ -288,38 +293,33 @@ async function loadDashboard() {
 async function loadClasses() {
     try {
         const res = await fetch(`${API_BASE}/classes`);
-        if (res.ok) {
-            classes = await res.json();
-        }
+        const apiClasses = res.ok ? await res.json() : [];
+        const canonicalNames = ['Baby Class', 'Middle Class', 'Top Class', 'P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'];
+        classes = canonicalNames.map((className, index) => {
+            const classRecord = apiClasses.find(item => item.class_name?.trim().toLowerCase() === className.toLowerCase());
+            const defaultSection = index < 3 ? 'Nursery' : index < 7 ? 'Lower Primary' : 'Upper Primary';
+            return classRecord || { class_id: index + 1, class_name: className, section: defaultSection };
+        });
         
-        // Populate class selects - with fallback hardcoded classes if needed
+        // Populate class selects - always exactly 10 canonical classes
         const registerSelect = document.getElementById('registerClassSelect');
         if (registerSelect) {
-            // Use API data if available, otherwise use fallback
-            let classOptions = '';
-            if (classes && classes.length > 0) {
-                classOptions = classes.map(c => `<option value="${c.class_id}">${escapeHtml(c.class_name)} (${escapeHtml(c.section)})</option>`).join('');
-            } else {
-                // Fallback: Hardcoded classes if API returns empty
-                const fallbackClasses = [
-                  { class_id: 1, class_name: 'Baby Class', section: 'Nursery' },
-                  { class_id: 2, class_name: 'Middle Class', section: 'Nursery' },
-                  { class_id: 3, class_name: 'Top Class', section: 'Nursery' },
-                  { class_id: 4, class_name: 'P.1', section: 'Lower Primary' },
-                  { class_id: 5, class_name: 'P.2', section: 'Lower Primary' },
-                  { class_id: 6, class_name: 'P.3', section: 'Lower Primary' },
-                  { class_id: 7, class_name: 'P.4', section: 'Lower Primary' },
-                  { class_id: 8, class_name: 'P.5', section: 'Upper Primary' },
-                  { class_id: 9, class_name: 'P.6', section: 'Upper Primary' },
-                  { class_id: 10, class_name: 'P.7', section: 'Upper Primary' }
-                ];
-                classOptions = fallbackClasses.map(c => `<option value="${c.class_id}">${escapeHtml(c.class_name)} (${escapeHtml(c.section)})</option>`).join('');
-            }
+            let classOptions = classes.map(c => `<option value="${c.class_id}">${escapeHtml(c.class_name)} (${escapeHtml(c.section)})</option>`).join('');
             registerSelect.innerHTML = '<option value="">Select Class</option>' + classOptions;
+        }
+        
+        // Also populate manage fees class table and class counts
+        const feesSelect = document.querySelector('#feesTable thead tr');
+        // Re-render fees table if on that page
+        if (document.getElementById('feesTable')) {
+            loadFeesTable();
+        }
+        if (document.getElementById('classCountsTable')) {
+            loadClassCounts();
         }
     } catch (err) {
         console.error('Classes load error:', err);
-        // Fallback on error
+        // Fallback on error - always show exactly 10 canonical classes
         showFallbackClasses();
     }
 }
@@ -332,17 +332,18 @@ function showFallbackClasses() {
     { class_id: 3, class_name: 'Top Class', section: 'Nursery' },
     { class_id: 4, class_name: 'P.1', section: 'Lower Primary' },
     { class_id: 5, class_name: 'P.2', section: 'Lower Primary' },
-    { class_id: 5, class_name: 'P.3', section: 'Lower Primary' },
-    { class_id: 6, class_name: 'P.4', section: 'Lower Primary' },
-    { class_id: 6, class_name: 'P.5', section: 'Upper Primary' },
-    { class_id: 7, class_name: 'P.6', section: 'Upper Primary' },
-    { class_id: 7, class_name: 'P.7', section: 'Upper Primary' }
+    { class_id: 6, class_name: 'P.3', section: 'Lower Primary' },
+    { class_id: 7, class_name: 'P.4', section: 'Upper Primary' },
+    { class_id: 8, class_name: 'P.5', section: 'Upper Primary' },
+    { class_id: 9, class_name: 'P.6', section: 'Upper Primary' },
+    { class_id: 10, class_name: 'P.7', section: 'Upper Primary' }
   ];
   const registerSelect = document.getElementById('registerClassSelect');
   if (registerSelect) {
     registerSelect.innerHTML = '<option value="">Select Class</option>' +
       fallbackClasses.map(c => `<option value="${c.class_id}">${escapeHtml(c.class_name)} (${escapeHtml(c.section)})</option>`).join('');
   }
+    classes = fallbackClasses;
 }
 
 // Load students
@@ -353,7 +354,7 @@ async function loadStudents() {
             showLogin();
             return;
         }
-        students = await res.json();
+        students = (await res.json()).filter(student => student.status === 'Active');
         
         // Populate student selects
         const feeSelect = document.getElementById('feeStudentSelect');
@@ -449,6 +450,17 @@ async function handleFeePayment(e) {
     data.student_id = parseInt(data.student_id);
     data.term_id = parseInt(data.term_id);
     data.amount_paid = parseFloat(data.amount_paid);
+    data.discount_amount = parseFloat(data.discount_amount || 0);
+    data.discount_reason = (data.discount_reason || '').trim();
+    if (data.discount_amount > 0 && !data.discount_reason) {
+        alert('Please enter a reason for the fee discount.');
+        return;
+    }
+    const receiptWindow = window.open('about:blank', '_blank');
+    if (receiptWindow) {
+        receiptWindow.document.write('<!doctype html><title>Preparing receipt</title><p style="font:16px sans-serif;padding:24px">Saving payment and preparing receipt...</p>');
+        receiptWindow.document.close();
+    }
     
     try {
         const res = await fetch(`${API_BASE}/fee-payments`, {
@@ -458,13 +470,23 @@ async function handleFeePayment(e) {
         });
         
         if (res.ok) {
-            alert('Payment recorded successfully!');
+            const payment = await res.json();
+            if (receiptWindow) {
+                receiptWindow.location.href = `receipt.html?payment_id=${encodeURIComponent(payment.payment_id)}`;
+            } else {
+                window.location.href = `receipt.html?payment_id=${encodeURIComponent(payment.payment_id)}`;
+                return;
+            }
+            alert(`Payment recorded successfully. Receipt: ${payment.receipt_number}`);
             e.target.reset();
+            loadDashboard();
         } else {
+            if (receiptWindow) receiptWindow.close();
             const err = await res.json();
             alert(err.error || 'Payment failed');
         }
     } catch (err) {
+        if (receiptWindow) receiptWindow.close();
         alert('Connection error');
         console.error('Fee payment error:', err);
     }
@@ -495,7 +517,7 @@ async function editFeePayment(id) {
                 term_id: payment.term_id,
                 discount_amount: payment.amount_paid,
                 reason: reason,
-                approved_by: '<?= $_SESSION['full_name'] ?? 'Admin' ?>'
+                approved_by: currentUser?.full_name || currentUser?.username || 'Admin'
             })
         })
         .then(res => res.json())
@@ -629,7 +651,9 @@ async function loadStudentsTable() {
             showLogin();
             return;
         }
-        const students = await res.json();
+        const allStudents = await res.json();
+        const students = allStudents.filter(student => student.status === 'Active');
+        window.studentsData = allStudents;
         
         const tbody = document.querySelector('#studentsTable tbody');
         tbody.innerHTML = students.map(s => `
@@ -649,6 +673,35 @@ async function loadStudentsTable() {
         console.error('Students table error:', err);
         showLogin();
     }
+}
+
+async function loadFeeReceipts() {
+    try {
+        const res = await fetch(`${API_BASE}/fee-payments`);
+        if (!res.ok) throw new Error('Could not load fee receipts');
+        const payments = await res.json();
+        const tbody = document.querySelector('#feeReceiptsTable tbody');
+        tbody.innerHTML = payments.length ? payments.map(payment => `
+            <tr>
+                <td>${escapeHtml(payment.date_paid || '')}</td>
+                <td>${escapeHtml(payment.receipt_number || '-')}</td>
+                <td>${escapeHtml(payment.full_name)}</td>
+                <td>${escapeHtml(payment.admission_number)}</td>
+                <td>${escapeHtml(`${payment.class_name} (${payment.section || ''})`)}</td>
+                <td>UGX ${formatNumber(payment.amount_paid)}</td>
+                <td>${escapeHtml(payment.payment_method || 'Cash')}</td>
+                <td><button class="btn btn-sm btn-success" onclick="printFeeReceipt(${payment.payment_id})">Print</button></td>
+            </tr>
+        `).join('') : '<tr><td colspan="8" class="empty-state">No fee payments recorded yet.</td></tr>';
+    } catch (err) {
+        console.error('Fee receipts error:', err);
+        const tbody = document.querySelector('#feeReceiptsTable tbody');
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Unable to load receipts.</td></tr>';
+    }
+}
+
+function printFeeReceipt(paymentId) {
+    window.open(`receipt.html?payment_id=${encodeURIComponent(paymentId)}`, '_blank', 'noopener');
 }
 
 // Load fee payment form
@@ -744,18 +797,17 @@ async function loadClassCounts() {
         }
         const students = await res.json();
         
-        const classCounts = {};
-        students.forEach(s => {
-            const key = s.class_name || 'Unknown';
-            classCounts[key] = (classCounts[key] || 0) + 1;
-        });
-        
         const tbody = document.querySelector('#classCountsTable tbody');
-        tbody.innerHTML = Object.entries(classCounts).map(([className, count]) => `
+        const classCounts = new Map(classes.map(c => [`${c.class_name}|${c.section}`, 0]));
+        students.forEach(s => {
+            const key = `${s.class_name}|${s.section}`;
+            if (classCounts.has(key) && s.status === 'Active') classCounts.set(key, classCounts.get(key) + 1);
+        });
+        tbody.innerHTML = classes.map(c => `
             <tr>
-                <td>${escapeHtml(className)}</td>
-                <td>-</td>
-                <td>${count}</td>
+                <td>${escapeHtml(c.class_name)}</td>
+                <td>${escapeHtml(c.section)}</td>
+                <td>${classCounts.get(`${c.class_name}|${c.section}`) || 0}</td>
             </tr>
         `).join('');
     } catch (err) {
@@ -781,12 +833,66 @@ async function loadUniformsTable() {
                 <td>${escapeHtml(u.applicable_gender)}</td>
                 <td>UGX ${formatNumber(u.price)}</td>
                 <td>${u.quantity_in_stock}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="editUniformItem(${u.uniform_id})">Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteUniformItem(${u.uniform_id})">Delete</button>
+                </td>
             </tr>
         `).join('');
     } catch (err) {
         console.error('Uniforms table error:', err);
         showLogin();
     }
+}
+
+async function editUniformItem(id) {
+    const response = await fetch(`${API_BASE}/uniform-items`);
+    if (!response.ok) return alert('Could not load uniform items.');
+    const items = await response.json();
+    const item = items.find(entry => entry.uniform_id === id);
+    if (!item) return alert('Uniform item not found.');
+
+    const itemName = prompt('Uniform item name:', item.item_name);
+    if (itemName === null) return;
+    const section = prompt('Applicable section:', item.applicable_section || 'All');
+    if (section === null) return;
+    const gender = prompt('Applicable gender (Male, Female, All):', item.applicable_gender || 'All');
+    if (gender === null) return;
+    const price = prompt('Price (UGX):', item.price);
+    if (price === null || !Number.isFinite(Number(price)) || Number(price) < 0) return;
+    const quantity = prompt('Quantity in stock:', item.quantity_in_stock);
+    if (quantity === null || !Number.isInteger(Number(quantity)) || Number(quantity) < 0) return;
+
+    const result = await fetch(`${API_BASE}/uniform-items/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            item_name: itemName.trim(),
+            applicable_section: section.trim(),
+            applicable_gender: gender.trim(),
+            price: Number(price),
+            quantity_in_stock: Number(quantity)
+        })
+    });
+    if (!result.ok) {
+        const error = await result.json();
+        alert(error.error || 'Could not update uniform item.');
+        return;
+    }
+    await loadUniformsTable();
+    await loadUniformItems();
+}
+
+async function deleteUniformItem(id) {
+    if (!confirm('Delete this uniform item?')) return;
+    const response = await fetch(`${API_BASE}/uniform-items/${id}`, { method: 'DELETE' });
+    if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Could not delete uniform item.');
+        return;
+    }
+    await loadUniformsTable();
+    await loadUniformItems();
 }
 
 // Load uniform issue form
@@ -797,11 +903,11 @@ async function loadUniformIssueForm() {
 // Load fees table
 async function loadFeesTable() {
     try {
-        const res = await fetch(`${API_BASE}/classes`);
-        const classes = await res.json();
-        
+        if (!classes.length) await loadClasses();
+        // Ensure exactly 10 classes are displayed
+        const displayClasses = classes.slice(0, 10);
         const tbody = document.querySelector('#feesTable tbody');
-        tbody.innerHTML = classes.map(c => `
+        tbody.innerHTML = displayClasses.map(c => `
             <tr>
                 <td>${escapeHtml(c.class_name)}</td>
                 <td>${escapeHtml(c.section)}</td>
@@ -872,26 +978,19 @@ function editStudent(id) {
     alert('Edit Student ID: ' + id + '\\n\\nData: ' + JSON.stringify(formData));
 }
 
-// Delete student
-function deleteStudent(id) {
-    if (confirm('Are you sure you want to delete this student?')) {
-        fetch(`${API_BASE}/students/${id}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                alert('Student deleted successfully');
-                loadStudentsTable();
-                loadStudents();
-            } else {
-                alert('Failed to delete student');
-            }
-        })
-        .catch(err => {
-            console.error('Delete error:', err);
-            alert('Error deleting student');
-        });
+// Archive the student to preserve fee and payment history.
+async function deleteStudent(id) {
+    if (!confirm('Remove this student from active lists? Their fee and payment history will be kept.')) return;
+    try {
+        const response = await fetch(`${API_BASE}/students/${id}`, { method: 'DELETE' });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not remove student.');
+        await Promise.all([loadStudentsTable(), loadStudents()]);
+        alert('Student removed from active lists. Fee and payment history has been preserved.');
+    } catch (err) {
+        console.error('Delete error:', err);
+        // If it's a soft-delete (status set to Withdrawn), it should succeed
+        // If failing, check if student has related records blocking the operation
+        alert('Error: ' + (err.message || 'Unknown error removing student'));
     }
 }

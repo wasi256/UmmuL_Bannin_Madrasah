@@ -548,7 +548,7 @@ $editing_payment_id = isset($_GET['edit_payment']) ? (int)$_GET['edit_payment'] 
                 <input type="number" name="discount_amount" min="1" required>
 
                 <label style="font-size:13px;">Reason</label>
-                <input type="text" name="reason" placeholder="e.g. Sibling discount, financial hardship" required>
+                <input type="text" name="reason" placeholder="e.g. Parent cannot raise the tuition, financial hardship, sibling discount" required>
 
                 <label style="font-size:13px;">Approved By</label>
                 <input type="text" name="approved_by" placeholder="e.g. Head Master Musa Ali" required>

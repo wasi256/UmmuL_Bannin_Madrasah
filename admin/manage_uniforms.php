@@ -6,6 +6,28 @@ $message = "";
 $messageType = "";
 
 // ------------------------------------------------------------
+// Handle deleting a uniform item
+// ------------------------------------------------------------
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['action'] === "delete_item") {
+    $uniform_id = $_POST['uniform_id'];
+    try {
+        $stmt = $conn->prepare("DELETE FROM uniform_items WHERE uniform_id = ?");
+        $stmt->bind_param("i", $uniform_id);
+        if ($stmt->execute()) {
+            $message = "Uniform item deleted successfully.";
+            $messageType = "success";
+        } else {
+            $message = "Error deleting item: " . $stmt->error;
+            $messageType = "error";
+        }
+        $stmt->close();
+    } catch (Exception $e) {
+        $message = "Error deleting item: " . $e->getMessage();
+        $messageType = "error";
+    }
+}
+
+// ------------------------------------------------------------
 // Handle restocking an existing item
 // ------------------------------------------------------------
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['action'] === "restock") {
@@ -215,6 +237,8 @@ $editing_id = isset($_GET['edit']) ? (int)$_GET['edit'] : null;
     .btn-small { padding: 6px 10px; font-size: 12px; border-radius: 4px; margin-top: 0; }
     .btn-edit { background-color: #e0a800; }
     .btn-edit:hover { background-color: #c69500; }
+    .btn-delete { background-color: #c0392b; color: white; }
+    .btn-delete:hover { background-color: #a5281c; }
     .btn-cancel { background-color: #999; }
 
     .edit-panel {
@@ -321,7 +345,11 @@ $editing_id = isset($_GET['edit']) ? (int)$_GET['edit'] : null;
                     <a href="?edit=<?php echo $item['uniform_id']; ?>">
                         <button type="button" class="btn-small btn-edit">Edit</button>
                     </a>
-                </td>
+                    <form method="POST" action="" onsubmit="return confirm('Delete this uniform item? This cannot be undone.');" style="display:inline;">
+                        <input type="hidden" name="action" value="delete_item">
+                        <input type="hidden" name="uniform_id" value="<?php echo $item['uniform_id']; ?>">
+                        <button type="submit" class="btn-small btn-delete">Delete</button>
+                    </form>
             </tr>
             <?php endif; ?>
         <?php endforeach; ?>

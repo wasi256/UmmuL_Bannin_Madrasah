@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fee Payment Receipt | Ummul Bannin Madrasah</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            --green: #14532d;
+            --green-soft: #e8f1e9;
+            --gold: #b8860b;
+            --ink: #252a27;
+            --muted: #68716b;
+            --line: #dce4dd;
+            --paper: #ffffff;
+            --canvas: #edf1ed;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 32px 16px;
+            color: var(--ink);
+            background: var(--canvas);
+            font: 14px/1.5 'Inter', sans-serif;
+        }
+        .receipt {
+            width: min(100%, 560px);
+            margin: 0 auto;
+            padding: 38px 42px;
+            background: var(--paper);
+            border: 1px solid var(--line);
+            box-shadow: 0 12px 32px rgb(23 43 29 / 9%);
+        }
+        .brand { text-align: center; padding-bottom: 22px; border-bottom: 2px dashed var(--gold); }
+        .brand img { display: block; width: 72px; height: 72px; object-fit: contain; margin: 0 auto 8px; }
+        .brand h1 { margin: 0; color: var(--green); font: 700 25px/1.2 'Amiri', serif; }
+        .brand p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+        h2 { margin: 24px 0 16px; text-align: center; color: var(--gold); font: 700 19px 'Amiri', serif; text-transform: uppercase; }
+        .rows { border-top: 1px solid var(--line); }
+        .row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+        .label { color: var(--muted); }
+        .value { text-align: right; font-weight: 600; overflow-wrap: anywhere; }
+        .amount { margin-top: 22px; padding: 18px; text-align: center; background: var(--green-soft); border-left: 4px solid var(--green); }
+        .amount strong { display: block; color: var(--green); font: 700 30px 'Amiri', serif; }
+        .amount span { color: var(--muted); font-size: 12px; }
+        .balance { margin: 16px 0 0; text-align: center; font-weight: 600; }
+        .footer { margin: 28px 0 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); text-align: center; font-size: 11px; }
+        .actions { display: flex; justify-content: center; gap: 10px; margin: 20px auto 0; }
+        button { padding: 10px 16px; border: 0; background: var(--green); color: white; font: 600 13px 'Inter', sans-serif; cursor: pointer; }
+        button.secondary { background: #e6ebe6; color: var(--ink); }
+        .status { width: min(100%, 560px); margin: 18px auto; padding: 15px; background: white; color: var(--muted); text-align: center; }
+        .status.error { color: #a5281c; }
+        [hidden] { display: none !important; }
+        @media (max-width: 480px) { body { padding: 12px 8px; } .receipt { padding: 26px 20px; } .brand h1 { font-size: 22px; } }
+        @media print {
+            @page { size: auto; margin: 12mm; }
+            body { padding: 0; background: white; }
+            .receipt { width: 100%; max-width: none; padding: 10px; border: 0; box-shadow: none; }
+            .actions, .status { display: none !important; }
+            .amount { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="status" id="status">Preparing receipt...</div>
+    <main class="receipt" id="receipt" hidden>
+        <header class="brand">
+            <img src="assets/images/logo.png" alt="Ummul Bannin Madrasah logo">
+            <h1>Ummul Bannin Madrasah</h1>
+            <p>Through Hard Work We Toil</p>
+        </header>
+        <h2>Fee Payment Receipt</h2>
+        <div class="rows">
+            <div class="row"><span class="label">Receipt No.</span><span class="value" id="receiptNumber"></span></div>
+            <div class="row"><span class="label">Date</span><span class="value" id="datePaid"></span></div>
+            <div class="row"><span class="label">Student</span><span class="value" id="studentName"></span></div>
+            <div class="row"><span class="label">Admission No.</span><span class="value" id="admissionNumber"></span></div>
+            <div class="row"><span class="label">Class</span><span class="value" id="studentClass"></span></div>
+            <div class="row"><span class="label">Term</span><span class="value" id="term"></span></div>
+            <div class="row"><span class="label">Payment Method</span><span class="value" id="paymentMethod"></span></div>
+            <div class="row"><span class="label">Received By</span><span class="value" id="receivedBy"></span></div>
+        </div>
+        <div class="amount"><strong id="amountPaid"></strong><span>Amount Paid</span></div>
+        <p class="balance" id="balance"></p>
+        <p class="footer">Please keep this receipt for your records.</p>
+    </main>
+    <div class="actions" id="actions" hidden>
+        <button type="button" onclick="window.print()">Print Receipt</button>
+        <button type="button" class="secondary" onclick="window.close()">Close</button>
+    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const paymentId = params.get('payment_id');
+        const status = document.getElementById('status');
+        const receipt = document.getElementById('receipt');
+        const actions = document.getElementById('actions');
+        const money = value => `UGX ${Number(value || 0).toLocaleString('en-UG')}`;
+
+        async function loadReceipt() {
+            if (!paymentId || !/^\d+$/.test(paymentId)) {
+                throw new Error('A valid payment reference is required.');
+            }
+            const response = await fetch(`/api/fee-payments/${encodeURIComponent(paymentId)}/receipt`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Could not load the receipt.');
+
+            const fields = {
+                receiptNumber: data.receipt_number,
+                datePaid: new Date(data.date_paid).toLocaleDateString(),
+                studentName: data.full_name,
+                admissionNumber: data.admission_number,
+                studentClass: `${data.class_name} (${data.section})`,
+                term: `Term ${data.term_number}, ${data.academic_year}`,
+                paymentMethod: data.payment_method || 'Cash',
+                receivedBy: data.received_by || 'Not specified',
+                amountPaid: money(data.amount_paid)
+            };
+            for (const [id, value] of Object.entries(fields)) {
+                document.getElementById(id).textContent = value;
+            }
+
+            const balance = Math.max(Number(data.total_due) - Number(data.total_paid), 0);
+            document.getElementById('balance').textContent = balance > 0
+                ? `Remaining balance this term: ${money(balance)}`
+                : 'Fully paid for this term';
+
+            status.hidden = true;
+            receipt.hidden = false;
+            actions.hidden = false;
+            document.title = `Receipt ${data.receipt_number} | Ummul Bannin Madrasah`;
+            window.setTimeout(() => window.print(), 400);
+        }
+
+        loadReceipt().catch(error => {
+            status.textContent = error.message;
+            status.classList.add('error');
+        });
+    </script>
+</body>
+</html>

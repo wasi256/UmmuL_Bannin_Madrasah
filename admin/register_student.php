@@ -60,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 // ------------------------------------------------------------
 // Fetch classes for the dropdown
 // ------------------------------------------------------------
-$classes_result = $conn->query("SELECT class_id, class_name, section FROM classes ORDER BY class_id");
+$classes_result = $conn->query("SELECT class_id, class_name, section FROM classes ORDER BY class_id LIMIT 10");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -120,6 +120,12 @@ $classes_result = $conn->query("SELECT class_id, class_name, section FROM classe
         border: 1px solid #ccc;
         border-radius: 5px;
         font-size: 14px;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='16'%20height='16'%20fill='currentColor'%20class='bi%20bi-chevron-down'%20viewBox='0%200%2016%2016'%3E%3Cpath%20d='M1.646%208.354l.708.708L5.383%2013.5l2.471-2.471a.5.5%200%200%201%20.658.107l1.57%201.57a.5.5%200%200%201%20-.258.801l-1.57%201.57.708.708L1.646%208.354zm4.646%200-1.57%201.57a.5.5%200%201%201-.354-.854l1.953-1.954L6.75%208.59l-1.803-1.803a.5.5%200%201%201%20.107-.658l1.57-1.57a.5.5%200%201%201%20.801-.258l-.708-.708zM6.854%202.854a.5.5%200%201%200-1.108.406L5.75%208.534%204.854%207.63a.5.5%200%201%200%20-.5.868l1.57%201.586%201.586-.5a.5.5%200%201%200%20.107-.658l-1.586-1.586.5-1.586a.5.5%200%201%200%20-.658-.108z'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 20px;
+        cursor: pointer;
     }
     .checkbox-row {
         display: flex;

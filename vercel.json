@@ -14,6 +14,10 @@
     {
       "src": "index.html",
       "use": "@vercel/static"
+    },
+    {
+      "src": "receipt.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -25,6 +29,14 @@
     {
       "src": "/assets/(.*)",
       "dest": "/assets/$1"
+    },
+    {
+      "src": "^/receipt$",
+      "dest": "/receipt.html"
+    },
+    {
+      "src": "^/receipt[.]html$",
+      "dest": "/receipt.html"
     },
     {
       "src": "^/$",

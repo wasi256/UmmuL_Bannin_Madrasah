@@ -9,17 +9,23 @@ $messageType = "";
 // Handle delete (removes student + their related records safely)
 // ------------------------------------------------------------
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['action'] === "delete_student") {
-    $student_id = $_POST['student_id'];
+    $student_id = intval($_POST['student_id']);
 
     $conn->begin_transaction();
     try {
-        $conn->query("DELETE FROM fee_payments WHERE student_id = " . intval($student_id));
-        $conn->query("DELETE FROM fee_discounts WHERE student_id = " . intval($student_id));
-        $conn->query("DELETE FROM uniform_issues WHERE student_id = " . intval($student_id));
-        $conn->query("DELETE FROM students WHERE student_id = " . intval($student_id));
-        $conn->commit();
-        $message = "Student and all their related records were deleted.";
-        $messageType = "success";
+        $conn->query("DELETE FROM fee_payments WHERE student_id = " . $student_id);
+        $conn->query("DELETE FROM fee_discounts WHERE student_id = " . $student_id);
+        $conn->query("DELETE FROM uniform_issues WHERE student_id = " . $student_id);
+        $affected = $conn->query("DELETE FROM students WHERE student_id = " . $student_id);
+        if ($affected && $affected->rowcount > 0) {
+            $conn->commit();
+            $message = "Student and all their related records were deleted.";
+            $messageType = "success";
+        } else {
+            $conn->rollback();
+            $message = "Student not found - deletion failed.";
+            $messageType = "error";
+        }
     } catch (Exception $e) {
         $conn->rollback();
         $message = "Error deleting student: " . $e->getMessage();
@@ -95,7 +101,7 @@ while ($row = $students_result->fetch_assoc()) {
 $stmt->close();
 
 // All classes for dropdowns
-$classes_result = $conn->query("SELECT class_id, class_name, section FROM classes ORDER BY class_id");
+$classes_result = $conn->query("SELECT class_id, class_name, section FROM classes ORDER BY class_id LIMIT 10");
 $all_classes = [];
 while ($row = $classes_result->fetch_assoc()) {
     $all_classes[] = $row;

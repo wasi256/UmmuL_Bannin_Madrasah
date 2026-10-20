@@ -49,6 +49,7 @@
                     <a href="#" class="nav-link" data-page="students"><span class="icon">&#128101;</span> Manage Students</a>
                     <a href="#" class="nav-link" data-page="class-counts"><span class="icon">&#128203;</span> Class Numbers</a>
                     <a href="#" class="nav-link" data-page="fee-payment"><span class="icon">&#128176;</span> Fee Payment</a>
+                    <a href="#" class="nav-link" data-page="fee-receipts"><span class="icon">&#128196;</span> Fee Receipts</a>
                     <a href="#" class="nav-link" data-page="manage-fees"><span class="icon">&#9878;</span> Manage Fees</a>
                     <a href="#" class="nav-link" data-page="uniform-issue"><span class="icon">&#128085;</span> Issue Uniform</a>
                     <a href="#" class="nav-link" data-page="manage-uniforms"><span class="icon">&#128230;</span> Manage Uniforms</a>
@@ -97,7 +98,7 @@
                         <div class="stat-card">
                             <div class="stat-icon">&#128218;</div>
                             <div>
-                                <div class="stat-number" id="statClasses">0</div>
+                                <div class="stat-number" id="statClasses">10</div>
                                 <div class="stat-label">Classes</div>
                             </div>
                         </div>
@@ -219,6 +220,14 @@
                                 <input type="number" name="amount_paid" required min="0" step="0.01">
                             </div>
                             <div class="form-group">
+                                <label>Fee discount (UGX)</label>
+                                <input type="number" name="discount_amount" min="0" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Reason for discount</label>
+                                <input type="text" name="discount_reason" maxlength="255" placeholder="e.g. Parent cannot raise the tuition, financial hardship, sibling discount">
+                            </div>
+                            <div class="form-group">
                                 <label>Payment Method</label>
                                 <select name="payment_method">
                                     <option value="Cash">Cash</option>
@@ -242,6 +251,30 @@
                                 <button type="submit" class="btn btn-primary">Record Payment</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+
+                <!-- Fee Receipts Page -->
+                <div id="page-fee-receipts" class="page">
+                    <div class="topbar"><h2>Fee Receipts</h2></div>
+                    <div class="panel">
+                        <div class="table-container">
+                            <table id="feeReceiptsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Receipt #</th>
+                                        <th>Student</th>
+                                        <th>Admission #</th>
+                                        <th>Class</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -359,6 +392,7 @@
                                         <th>Gender</th>
                                         <th>Price</th>
                                         <th>Stock</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -468,6 +502,6 @@
         </div>
     </div>
 
-    <script src="assets/js/app.js"></script>
+    <script src="assets/js/app.js?v=20261019-classes10"></script>
 </body>
 </html>

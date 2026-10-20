@@ -12,6 +12,8 @@ async function initDB() {
   const client = await pool.connect();
   try {
     await client.query(`
+      SELECT pg_advisory_xact_lock(727202610, 1);
+
       CREATE TABLE IF NOT EXISTS classes (
         class_id SERIAL PRIMARY KEY,
         class_name VARCHAR(50) NOT NULL,
@@ -133,6 +135,7 @@ async function initDB() {
     console.log('Database initialized successfully');
   } catch (err) {
     console.error('Database initialization error:', err);
+    throw err;
   } finally {
     client.release();
   }
