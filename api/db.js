@@ -1,12 +1,11 @@
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+   connectionString: process.env.DATABASE_URL.replace('sslmode=require&channel_binding=require', 'sslmode=prefer'),
+   ssl: {
+     rejectUnauthorized: false
+   }
 });
-
 // Initialize database tables
 async function initDB() {
   const client = await pool.connect();

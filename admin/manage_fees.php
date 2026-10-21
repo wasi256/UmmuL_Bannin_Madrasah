@@ -1,5 +1,4 @@
 <?php
-
 include '../includes/auth_check.php';
 include '../includes/db_connect.php';
 
@@ -38,6 +37,29 @@ foreach ($defaults as $d) {
 $stmtCheck->close();
 $stmtInsert->close();
 
+// handle add new fee
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_fee') {
+    $fee_key = $_POST['fee_key'] ?? '';
+    $label = $_POST['label'] ?? '';
+    $amount = (int)($_POST['amount'] ?? 0);
+
+    if ($fee_key === '' || $label === '' || $amount < 0) {
+        $message = "All fields are required and amount must be non-negative.";
+        $messageType = "error";
+    } else {
+        $stmt = $conn->prepare("INSERT INTO fee_defaults (fee_key, label, amount) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE amount = ?, label = ?");
+        $stmt->bind_param("ssii", $fee_key, $label, $amount, $amount, $label);
+        if ($stmt->execute()) {
+            $message = "Fee added/updated.";
+            $messageType = "success";
+        } else {
+            $message = "Error adding fee: " . $stmt->error;
+            $messageType = "error";
+        }
+        $stmt->close();
+    }
+}
+
 // handle update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_fee') {
     $fee_key = $_POST['fee_key'] ?? '';
@@ -60,6 +82,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// handle delete
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_fee') {
+    $fee_key = $_POST['fee_key'] ?? '';
+
+    if ($fee_key === '') {
+        $message = "Invalid fee key.";
+        $messageType = "error";
+    } else {
+        $stmt = $conn->prepare("DELETE FROM fee_defaults WHERE fee_key = ?");
+        $stmt->bind_param("s", $fee_key);
+        if ($stmt->execute()) {
+            $message = "Fee deleted.";
+            $messageType = "success";
+        } else {
+            $message = "Error deleting fee: " . $stmt->error;
+            $messageType = "error";
+        }
+        $stmt->close();
+    }
+}
+
 // fetch fees
 $fees = [];
 $result = $conn->query("SELECT * FROM fee_defaults ORDER BY label");
@@ -75,53 +118,80 @@ $editing = isset($_GET['edit']) ? $_GET['edit'] : null;
 <meta charset="utf-8">
 <title>Manage Fees - Ummul Bannin Madrasah</title>
 <style>
-body{font-family:Arial;background:#f4f6f5;padding:30px}
-.container{max-width:800px;margin:0 auto;background:#fff;padding:24px;border-radius:8px}
-table{width:100%;border-collapse:collapse;margin-top:12px}
-th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}
-button{padding:8px 12px;background:#1b5e20;color:#fff;border:none;border-radius:4px;cursor:pointer}
-.input-small{width:140px;padding:8px}
-.message{padding:10px;border-radius:6px;margin-bottom:12px}
-.success{background:#d4edda;color:#155724}
-.error{background:#f8d7da;color:#721c24}
-a.button{display:inline-block;padding:8px 12px;background:#6c757d;color:#fff;border-radius:4px;text-decoration:none}
+	body{font-family:Arial;background:#f4f6f5;padding:30px}
+	.container{max-width:800px;margin:0 auto;background:#fff;padding:24px;border-radius:8px}
+	table{width:100%;border-collapse:collapse;margin-top:12px}
+	th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}
+	button{padding:8px 12px;background:#1b5e20;color:#fff;border:none;border-radius:4px;cursor:pointer}
+	.input-small{width:140px;padding:8px}
+	.message{padding:10px;border-radius:6px;margin-bottom:12px}
+	.success{background:#d4edda;color:#155724}
+	.error{background:#f8d7da;color:#721c24}
+	a.button{display:inline-block;padding:8px 12px;background:#6c757d;color:#fff;border-radius:4px;text-decoration:none}
+	.add-row{background:#d4edda;color:#155724;padding:8px;border-radius:4px;margin-bottom:12px;border:1px solid #c3e6cb}
 </style>
 </head>
 <body>
-<div class="container">
-    <a href="dashboard.php" class="button">&larr; Back to Dashboard</a>
-    <h2>Default Fees</h2>
-    <?php if ($message): ?>
-        <div class="message <?php echo $messageType; ?>"><?php echo htmlspecialchars($message); ?></div>
-    <?php endif; ?>
 
-    <table>
-        <tr><th>Fee</th><th>Amount (UGX)</th><th>Action</th></tr>
-        <?php foreach ($fees as $fee): ?>
-            <?php if ($editing === $fee['fee_key']): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($fee['label']); ?></td>
-                    <td>
-                        <form method="POST" action="">
-                            <input type="hidden" name="action" value="update_fee">
-                            <input type="hidden" name="fee_key" value="<?php echo htmlspecialchars($fee['fee_key']); ?>">
-                            <input class="input-small" type="number" name="amount" min="0" value="<?php echo (int)$fee['amount']; ?>" required>
-                    </td>
-                    <td>
-                            <button type="submit">Save</button>
-                            <a href="manage_fees.php" class="button" style="background:#999;margin-left:8px">Cancel</a>
-                        </form>
-                    </td>
-                </tr>
-            <?php else: ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($fee['label']); ?></td>
-                    <td>UGX <?php echo number_format($fee['amount']); ?></td>
-                    <td><a href="?edit=<?php echo urlencode($fee['fee_key']); ?>" class="button">Edit</a></td>
-                </tr>
-            <?php endif; ?>
-        <?php endforeach; ?>
-    </table>
+<div class="container">
+	<a href="dashboard.php" class="button">&larr; Back to Dashboard</a>
+	<h2>Default Fees</h2>
+
+	<!-- Add New Fee Form -->
+	<div class="add-row">
+		<h3>Add / Update Fee Default</h3>
+		<form method="POST" action="">
+			<input type="hidden" name="action" value="add_fee">
+			<div style="display:grid;grid-template-columns:150px 1fr 100px;gap:10px;">
+				<label>Fee Key</label>
+				<input type="text" name="fee_key" required>
+				<label>Fee Label</label>
+				<input type="text" name="label" required>
+				<label>Amount (UGX)</label>
+				<input type="number" name="amount" min="0" required>
+			</div>
+			<button type="submit" style="margin-top:12px;background:#28a745;width:100%;">Save Fee</button>
+		</form>
+	</div>
+
+	<?php if ($message): ?>
+		<div class="message <?php echo $messageType; ?>"><?php echo htmlspecialchars($message); ?></div>
+	<?php endif; ?>
+
+	<table>
+		<tr><th>Fee</th><th>Amount (UGX)</th><th>Action</th></tr>
+		<?php foreach ($fees as $fee): ?>
+			<?php if ($editing === $fee['fee_key']): ?>
+				<tr>
+					<td><?php echo htmlspecialchars($fee['label']); ?></td>
+					<td>
+						<form method="POST" action="">
+							<input type="hidden" name="action" value="update_fee">
+							<input type="hidden" name="fee_key" value="<?php echo htmlspecialchars($fee['fee_key']); ?>">
+							<input class="input-small" type="number" name="amount" min="0" value="<?php echo (int)$fee['amount']; ?>" required>
+					</td>
+					<td>
+							<button type="submit">Save</button>
+							<a href="manage_fees.php" class="button" style="background:#999;margin-left:8px">Cancel</a>
+					</td>
+				</tr>
+			<?php else: ?>
+				<tr>
+					<td><?php echo htmlspecialchars($fee['label']); ?></td>
+					<td>UGX <?php echo number_format($fee['amount']); ?></td>
+					<td>
+						<a href="?edit=<?php echo urlencode($fee['fee_key']); ?>" class="button">Edit</a>
+						<form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this fee?');" action="">
+							<input type="hidden" name="action" value="delete_fee">
+							<input type="hidden" name="fee_key" value="<?php echo htmlspecialchars($fee['fee_key']); ?>">
+							<button type="submit" class="button btn-delete" style="background:#c0392b;color:white;padding:4px 8px;font-size:11px;">Delete</button>
+						</form>
+					</td>
+				</tr>
+			<?php endif; ?>
+		<?php endforeach; ?>
+	</table>
 </div>
+
 </body>
 </html>

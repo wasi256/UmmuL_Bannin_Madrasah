@@ -20,8 +20,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $guardian_phone   = trim($_POST['guardian_phone']);
 
     // Basic validation
-    if (empty($admission_number) || empty($full_name) || empty($class_id)) {
-        $message = "Please fill in admission number, full name, and class.";
+    if (empty($admission_number) || empty($full_name) || empty($gender) || empty($class_id)) {
+        $message = "Please fill in admission number, full name, gender, and class.";
         $messageType = "error";
     } else {
 

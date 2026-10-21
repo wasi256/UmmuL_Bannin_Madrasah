@@ -644,6 +644,21 @@ app.post('/api/fees', requireAuth, async (req, res) => {
   }
 });
 
+app.delete('/api/fees/:fee_key', requireAuth, async (req, res) => {
+  try {
+    const { fee_key } = req.params;
+    const result = await pool.query(
+      'DELETE FROM fee_defaults WHERE fee_key = $1 RETURNING *',
+      [fee_key]
+    );
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Fee not found' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete fee error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ==================== TERMS ====================
 
 if (require.main === module) {
