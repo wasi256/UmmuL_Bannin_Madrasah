@@ -148,7 +148,7 @@ app.get('/api/dashboard', requireAuth, async (req, res) => {
             s.student_id, s.admission_number, s.full_name, s.is_boarder,
             c.class_id, c.class_name, c.section, c.term_fee
       FROM fee_payments fp 
-      JOIN students s ON fp.student_id = s.student_id 
+      JOIN students s ON fp.student_id = s.student_id AND s.status = 'Active'
       JOIN classes c ON s.class_id = c.class_id 
       ORDER BY fp.payment_id DESC LIMIT 5
     `);
@@ -188,6 +188,9 @@ app.get('/api/students', requireAuth, async (req, res) => {
 app.post('/api/students', requireAuth, async (req, res) => {
   try {
     const { admission_number, full_name, gender, date_of_birth, class_id, is_boarder, guardian_name, guardian_phone } = req.body;
+    if (!gender || !['Male', 'Female'].includes(gender)) {
+      return res.status(400).json({ error: 'Valid gender (Male or Female) is required.' });
+    }
     const result = await pool.query(`
       INSERT INTO students (admission_number, full_name, gender, date_of_birth, class_id, is_boarder, guardian_name, guardian_phone)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -270,7 +273,7 @@ app.get('/api/fee-payments', requireAuth, async (req, res) => {
     const result = await pool.query(`
       SELECT fp.*, s.full_name, s.admission_number, c.class_name, c.section
       FROM fee_payments fp
-      JOIN students s ON fp.student_id = s.student_id
+      JOIN students s ON fp.student_id = s.student_id AND s.status = 'Active'
       JOIN classes c ON s.class_id = c.class_id
       ORDER BY fp.payment_id DESC
     `);
@@ -559,6 +562,28 @@ app.post('/api/users', requireAdmin, async (req, res) => {
   }
 });
 
+// ==================== WITHDRAWN STUDENTS HISTORY ====================
+
+app.get('/api/withdrawn-students', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT s.full_name, s.admission_number, c.class_name, c.section,
+        fp.payment_id, fp.amount_paid, fp.date_paid, fp.receipt_number,
+        fp.payment_method, fp.received_by, at.term_number, at.academic_year
+      FROM students s
+      JOIN classes c ON s.class_id = c.class_id
+      JOIN fee_payments fp ON s.student_id = fp.student_id
+      JOIN academic_terms at ON fp.term_id = at.term_id
+      WHERE s.status = 'Withdrawn'
+      ORDER BY c.class_name, s.full_name, fp.payment_id DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Withdrawn students error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ==================== TERMS ====================
 
 app.get('/api/terms', requireAuth, async (req, res) => {
@@ -588,6 +613,38 @@ app.post('/api/terms', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// ==================== FEE DEFAULTS / MANAGE FEES ====================
+
+app.get('/api/fees', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM fee_defaults ORDER BY label');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Fees error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/fees', requireAuth, async (req, res) => {
+  try {
+    const { fee_key, label, amount } = req.body;
+    if (!fee_key || !label || amount === undefined || amount < 0) {
+      return res.status(400).json({ error: 'fee_key, label, and non-negative amount are required.' });
+    }
+    const result = await pool.query(`
+      INSERT INTO fee_defaults (fee_key, label, amount) VALUES ($1, $2, $3)
+      ON CONFLICT (fee_key) DO UPDATE SET amount = $3, label = $4
+      RETURNING *
+    `, [fee_key, label, amount, label]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Fee defaults error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ==================== TERMS ====================
 
 if (require.main === module) {
   databaseReady.then(() => {
