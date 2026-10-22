@@ -289,46 +289,34 @@ async function loadDashboard() {
     }
 }
 
-// Load classes
-async function loadClasses() {
-    try {
-        const res = await fetch(`${API_BASE}/classes`);
-        const apiClasses = res.ok ? await res.json() : [];
-        const canonicalNames = ['Baby Class', 'Middle Class', 'Top Class', 'P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'];
-        classes = canonicalNames.map((className, index) => {
-            const classRecord = apiClasses.find(item => item.class_name?.trim().toLowerCase() === className.toLowerCase());
-            const defaultSection = index < 3 ? 'Nursery' : index < 7 ? 'Lower Primary' : 'Upper Primary';
-            return classRecord || { class_id: index + 1, class_name: className, section: defaultSection };
-        });
+// Load classes - simplified, no API dependency needed
+function loadClasses() {
+    // Always exactly 10 canonical classes with correct IDs 1-10
+    classes = [
+        { class_id: 1, class_name: 'Baby Class', section: 'Nursery' },
+        { class_id: 2, class_name: 'Middle Class', section: 'Nursery' },
+        { class_id: 3, class_name: 'Top Class', section: 'Nursery' },
+        { class_id: 4, class_name: 'P.1', section: 'Lower Primary' },
+        { class_id: 5, class_name: 'P.2', section: 'Lower Primary' },
+        { class_id: 6, class_name: 'P.3', section: 'Lower Primary' },
+        { class_id: 7, class_name: 'P.4', section: 'Upper Primary' },
+        { class_id: 8, class_name: 'P.5', section: 'Upper Primary' },
+        { class_id: 9, class_name: 'P.6', section: 'Upper Primary' },
+        { class_id: 10, class_name: 'P.7', section: 'Upper Primary' }
+    ];
+    
+    // Populate class select - register page
+    const registerSelect = document.getElementById('registerClassSelect');
+    if (registerSelect) {
+        let classOptions = classes.map(c => `<option value="${c.class_id}">${escapeHtml(c.class_name)} (${escapeHtml(c.section)})</option>`).join('');
+        registerSelect.innerHTML = '<option value="">Select Class</option>' + classOptions;
         
-        // Populate class selects - always exactly 10 canonical classes
-        const registerSelect = document.getElementById('registerClassSelect');
-        if (registerSelect) {
-            let classOptions = classes.map(c => `<option value="${c.class_id}">${escapeHtml(c.class_name)} (${escapeHtml(c.section)})</option>`).join('');
-            registerSelect.innerHTML = '<option value="">Select Class</option>' + classOptions;
-            
-            // Handle class selection change
-            registerSelect.onchange = function() {
-                // Store the selected class value - browser preserves select values on change
-                // No additional handler needed as the native onchange behavior preserves the selection
-            };
-            
-        }
-        
-        // Also populate manage fees class table and class counts
-        const feesSelect = document.querySelector('#feesTable thead tr');
-        // Re-render fees table if on that page
-        if (document.getElementById('feesTable')) {
-            loadFeesTable();
-        }
-        if (document.getElementById('classCountsTable')) {
-            loadClassCounts();
-        }
-    } catch (err) {
-        console.error('Classes load error:', err);
-        // Fallback on error - always show exactly 10 canonical classes
-        showFallbackClasses();
+        // No onchange handler needed - browser preserves select values natively
     }
+    
+    // Populate manage fees class table and class counts
+    // Use the first 10 classes as display classes
+    const displayClasses = classes.slice(0, 10);
 }
 
 // Fallback function to populate classes
