@@ -266,6 +266,28 @@ app.get('/api/classes', requireAuth, async (req, res) => {
   }
 });
 
+// ==================== UPDATE CLASS FEE ====================
+
+app.put('/api/classes/:id', requireAuth, async (req, res) => {
+  try {
+    const { term_fee } = req.body;
+    if (typeof term_fee !== 'number' || term_fee < 0) {
+      return res.status(400).json({ error: 'Valid term fee (non-negative number) is required.' });
+    }
+    const result = await pool.query(`
+      UPDATE classes
+      SET term_fee = $1
+      WHERE class_id = $2
+      RETURNING class_id, class_name, section, term_fee
+    `, [term_fee, req.params.id]);
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Class not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Update class fee error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ==================== FEE PAYMENTS ====================
 
 app.get('/api/fee-payments', requireAuth, async (req, res) => {

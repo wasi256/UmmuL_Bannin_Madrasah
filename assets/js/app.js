@@ -913,8 +913,7 @@ async function loadFeesTable() {
                 <td>${escapeHtml(c.section)}</td>
                 <td>UGX ${formatNumber(c.term_fee)}</td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="editFee('${c.fee_key}')">Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteFee('${c.fee_key}')">Delete</button>
+                    <button class="btn btn-sm btn-primary" onclick="editFee('${c.class_name}')">Edit</button>
                 </td>
             </tr>
         `).join('');
@@ -999,34 +998,32 @@ async function deleteStudent(id) {
     }
 }
 
-async function editFee(feeKey) {
-    if (!confirm('Are you sure you want to edit this fee default?')) return;
+async function editFee(className) {
+    if (!confirm('Edit fee for ' + className + '?')) return;
     
-    // Map fee keys to labels
-    const labelMap = {
-        'boarding': 'Boarding',
-        'upper_primary': 'Upper Primary', 
-        'lower_primary': 'Lower Primary',
-        'nursery': 'Nursery'
-    };
-    const defaultLabel = labelMap[feeKey] || feeKey;
+    // Find the class_id from the displayed classes
+    const displayClasses = classes.slice(0, 10);
+    const classObj = displayClasses.find(c => c.class_name === className);
+    if (!classObj) {
+        alert('Class not found in displayed list.');
+        return;
+    }
     
-    const newAmount = prompt('Enter new amount (UGX):', '');
-    if (newAmount === null || newAmount.trim() === '') return;
-    const amount = parseInt(newAmount);
-    if (isNaN(amount) || amount < 0) {
+    const newFee = prompt('Enter new fee amount (UGX):', classObj.term_fee);
+    if (newFee === null || isNaN(newFee) || newFee < 0) {
         alert('Please enter a valid non-negative amount.');
         return;
     }
+    
     try {
-        const response = await fetch(`${API_BASE}fees`, {
-            method: 'POST',
+        const response = await fetch(`/api/classes/${classObj.class_id}`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fee_key: feeKey, label: defaultLabel, amount: amount })
+            body: JSON.stringify({ term_fee: Number(newFee) })
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Could not update fee.');
-        alert('Fee updated successfully.');
+        alert('Fee updated successfully: UGX ' + formatNumber(data.term_fee));
         await loadFeesTable();
     } catch (err) {
         console.error('Edit fee error:', err);
