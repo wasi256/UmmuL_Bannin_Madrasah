@@ -238,7 +238,8 @@ $editing_id = isset($_GET['edit']) ? (int)$_GET['edit'] : null;
     .btn-edit { background-color: #e0a800; }
     .btn-edit:hover { background-color: #c69500; }
     .btn-delete { background-color: #c0392b; color: white; }
-    .btn-delete:hover { background-color: #a5281c; }
+    .add-form-container { margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
+    .add-form-container hidden { display: none; }
     .btn-cancel { background-color: #999; }
 
     .edit-panel {
@@ -266,6 +267,13 @@ $editing_id = isset($_GET['edit']) ? (int)$_GET['edit'] : null;
     <?php endif; ?>
 
     <h2>Current Uniform Stock</h2>
+    
+    <div style="margin-bottom:20px;">
+        <button style="background-color:#28a745;color:white;padding:10px 15px;border:none;border-radius:5px;cursor:pointer;font-size:14px;" onclick="document.getElementById('addUniformForm').style.display='block'">
+            + Add New Uniform
+        </button>
+    </div>
+
     <table>
         <tr>
             <th>Item</th>
@@ -355,36 +363,41 @@ $editing_id = isset($_GET['edit']) ? (int)$_GET['edit'] : null;
         <?php endforeach; ?>
     </table>
 
-    <h2>Add a New Uniform Item</h2>
-    <form method="POST" action="">
-        <input type="hidden" name="action" value="add_item">
-
-        <label for="item_name">Item Name</label>
-        <input type="text" id="item_name" name="item_name" placeholder="e.g. Dress" required>
-
-        <label for="applicable_section">Applies To Section</label>
-        <select id="applicable_section" name="applicable_section" required>
-            <option value="All">All Sections</option>
-            <option value="Nursery">Nursery</option>
-            <option value="Lower Primary">Lower Primary</option>
-            <option value="Upper Primary">Upper Primary</option>
-        </select>
-
-        <label for="applicable_gender">Applies To Gender</label>
-        <select id="applicable_gender" name="applicable_gender" required>
-            <option value="All">All (Boys & Girls)</option>
-            <option value="Female">Girls Only</option>
-            <option value="Male">Boys Only</option>
-        </select>
-
-        <label for="price">Price (UGX)</label>
-        <input type="number" id="price" name="price" min="0" required>
-
-        <label for="initial_stock">Initial Stock Quantity</label>
-        <input type="number" id="initial_stock" name="initial_stock" min="0" value="0" required>
-
-        <button type="submit">Add Item</button>
-    </form>
+<h2>Add a New Uniform Item</h2>
+    <div class="add-form-container" id="addUniformForm">
+        <form method="POST" action="">
+            <input type="hidden" name="action" value="add_item">
+    
+            <label for="item_name">Item Name</label>
+            <input type="text" id="item_name" name="item_name" placeholder="e.g. Dress" required>
+    
+            <label for="applicable_section">Applies To Section</label>
+            <select id="applicable_section" name="applicable_section" required>
+                <option value="All">All Sections</option>
+                <option value="Nursery">Nursery</option>
+                <option value="Lower Primary">Lower Primary</option>
+                <option value="Upper Primary">Upper Primary</option>
+            </select>
+    
+            <label for="applicable_gender">Applies To Gender</label>
+            <select id="applicable_gender" name="applicable_gender" required>
+                <option value="All">All (Boys & Girls)</option>
+                <option value="Female">Girls Only</option>
+                <option value="Male">Boys Only</option>
+            </select>
+    
+            <label for="price">Price (UGX)</label>
+            <input type="number" id="price" name="price" min="0" required>
+    
+            <label for="initial_stock">Initial Stock Quantity</label>
+            <input type="number" id="initial_stock" name="initial_stock" min="0" value="0" required>
+    
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;">
+                <button type="submit" style="background-color:#28a745;color:white;padding:8px 15px;border:none;border-radius:5px;">Add Item</button>
+                <button type="button" onclick="document.getElementById('addUniformForm').style.display='none'" style="background-color:#6c757d;color:white;padding:8px 15px;border:none;border-radius:5px;">Cancel</button>
+            </div>
+        </form>
+    </div>
 
 </div>
 
