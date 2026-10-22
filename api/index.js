@@ -442,6 +442,21 @@ app.get('/api/uniform-items', requireAuth, async (req, res) => {
   }
 });
 
+app.post('/api/uniform-items', requireAuth, async (req, res) => {
+  try {
+    const { item_name, applicable_section, applicable_gender, price, quantity_in_stock } = req.body;
+    const result = await pool.query(`
+      INSERT INTO uniform_items (item_name, applicable_section, applicable_gender, price, quantity_in_stock)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `, [item_name, applicable_section, applicable_gender, price, quantity_in_stock]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Create uniform item error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.put('/api/uniform-items/:id', requireAuth, async (req, res) => {
   try {
     const { item_name, applicable_section, applicable_gender, price, quantity_in_stock } = req.body;

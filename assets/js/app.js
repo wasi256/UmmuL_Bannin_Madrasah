@@ -829,7 +829,7 @@ async function loadUniformsTable() {
         const addButtonHtml = `
             <tr>
                 <td colspan="6" style="padding: 12px; background-color: #e8f5e9; border-top: 1px solid #cddc39;">
-                    <button style="background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;" onclick="showAddUniformForm()">
+                    <button style="background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;" onclick="alert('Button clicked!'); showAddUniformForm()">
                         + Add New Uniform
                     </button>
                 </td>
@@ -858,43 +858,41 @@ async function loadUniformsTable() {
 
 function showAddUniformForm() {
     const formHtml = `
-        <div id="addUniformForm" style="background: #f8f9fa; padding: 20px; border-radius: 8; margin: 20px 0; display: block;">
-            <h3>Add New Uniform Item</h3>
-            <form onsubmit="addUniformItem(event)">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                    <div>
-                        <label>Item Name *</label>
-                        <input type="text" id="newItemName" required>
-                    </div>
-                    <div>
-                        <label>Section *</label>
-                        <select id="newSection" required>
-                            <option value="All">All Sections</option>
-                            <option value="Nursery">Nursery</option>
-                            <option value="Lower Primary">Lower Primary</option>
-                            <option value="Upper Primary">Upper Primary</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Gender *</label>
-                        <select id="newGender" required>
-                            <option value="All">All (Boys & Girls)</option>
-                            <option value="Female">Girls Only</option>
-                            <option value="Male">Boys Only</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Price (UGX) *</label>
-                        <input type="number" id="newPrice" min="0" required>
-                    </div>
-                    <div>
-                        <label>Initial Stock</label>
-                        <input type="number" id="newStock" value="0" min="0">
-                    </div>
+        <div id="addUniformForm" style="position: fixed; top: 10%; left: 50%; transform: translateX(-50%); background: #f8f9fa; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; min-width: 300px; width: 90%; max-width: 500px;">
+            <h3 style="margin-top: 0;">Add New Uniform Item</h3>
+            <form id="uniformAddForm" onsubmit="return addUniformItem(event)">
+                <div style="margin-bottom: 15px;">
+                    <label>Item Name *</label>
+                    <input type="text" id="newItemName" required>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label>Section *</label>
+                    <select id="newSection" required>
+                        <option value="All">All Sections</option>
+                        <option value="Nursery">Nursery</option>
+                        <option value="Lower Primary">Lower Primary</option>
+                        <option value="Upper Primary">Upper Primary</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label>Gender *</label>
+                    <select id="newGender" required>
+                        <option value="All">All (Boys & Girls)</option>
+                        <option value="Female">Girls Only</option>
+                        <option value="Male">Boys Only</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label>Price (UGX) *</label>
+                    <input type="number" id="newPrice" min="0" required>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label>Initial Stock</label>
+                    <input type="number" id="newStock" value="0" min="0">
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="submit" style="background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px;">Add Item</button>
-                    <button type="button" onclick="hideAddUniformForm()" style="background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px;">Cancel</button>
+                    <button type="button" onclick="hideUniformAddForm()" style="background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px;">Cancel</button>
                 </div>
             </form>
         </div>
@@ -903,8 +901,7 @@ function showAddUniformForm() {
     const existing = document.getElementById('addUniformForm');
     if (existing) existing.remove();
     
-    const panel = document.querySelector('.panel') || document.body;
-    panel.insertAdjacentHTML('beforeend', formHtml);
+    document.body.insertAdjacentHTML('beforeend', formHtml);
 }
 
 function hideAddUniformForm() {

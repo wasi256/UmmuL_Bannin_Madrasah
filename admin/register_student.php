@@ -61,6 +61,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 // Fetch classes for the dropdown
 // ------------------------------------------------------------
 $classes_result = $conn->query("SELECT class_id, class_name, section FROM classes ORDER BY class_id LIMIT 10");
+
+// Fallback classes if table is empty
+$fallbackClasses = [
+    ['class_id' => 1, 'class_name' => 'Baby Class', 'section' => 'Nursery'],
+    ['class_id' => 2, 'class_name' => 'Middle Class', 'section' => 'Nursery'],
+    ['class_id' => 3, 'class_name' => 'Top Class', 'section' => 'Nursery'],
+    ['class_id' => 4, 'class_name' => 'P.1', 'section' => 'Lower Primary'],
+    ['class_id' => 5, 'class_name' => 'P.2', 'section' => 'Lower Primary'],
+    ['class_id' => 6, 'class_name' => 'P.3', 'section' => 'Lower Primary'],
+    ['class_id' => 7, 'class_name' => 'P.4', 'section' => 'Upper Primary'],
+    ['class_id' => 8, 'class_name' => 'P.5', 'section' => 'Upper Primary'],
+    ['class_id' => 9, 'class_name' => 'P.6', 'section' => 'Upper Primary'],
+    ['class_id' => 10, 'class_name' => 'P.7', 'section' => 'Upper Primary'],
+];
+
+$hasClasses = $classes_result && $classes_result->rowCount > 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -202,11 +218,19 @@ $classes_result = $conn->query("SELECT class_id, class_name, section FROM classe
         <label for="class_id">Class</label>
         <select id="class_id" name="class_id" required>
             <option value="">-- Select Class --</option>
-            <?php while ($row = $classes_result->fetch_assoc()): ?>
-                <option value="<?php echo $row['class_id']; ?>">
-                    <?php echo htmlspecialchars($row['class_name'] . " (" . $row['section'] . ")"); ?>
-                </option>
-            <?php endwhile; ?>
+            <?php if ($hasClasses): ?>
+                <?php while ($row = $classes_result->fetch_assoc()): ?>
+                    <option value="<?php echo $row['class_id']; ?>">
+                        <?php echo htmlspecialchars($row['class_name'] . " (" . $row['section'] . ")"); ?>
+                    </option>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <?php foreach ($fallbackClasses as $fc): ?>
+                    <option value="<?php echo $fc['class_id']; ?>">
+                        <?php echo htmlspecialchars($fc['class_name'] . " (" . $fc['section'] . ")"); ?>
+                    </option>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </select>
 
         <div class="checkbox-row">
