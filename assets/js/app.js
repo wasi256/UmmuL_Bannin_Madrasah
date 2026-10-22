@@ -306,6 +306,13 @@ async function loadClasses() {
         if (registerSelect) {
             let classOptions = classes.map(c => `<option value="${c.class_id}">${escapeHtml(c.class_name)} (${escapeHtml(c.section)})</option>`).join('');
             registerSelect.innerHTML = '<option value="">Select Class</option>' + classOptions;
+            
+            // Handle class selection change
+            registerSelect.onchange = function() {
+                // Store the selected class value - browser preserves select values on change
+                // No additional handler needed as the native onchange behavior preserves the selection
+            };
+            
         }
         
         // Also populate manage fees class table and class counts

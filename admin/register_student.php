@@ -216,7 +216,7 @@ $hasClasses = $classes_result && $classes_result->rowCount > 0;
         <input type="date" id="date_of_birth" name="date_of_birth">
 
         <label for="class_id">Class</label>
-        <select id="class_id" name="class_id" required>
+        <select id="class_id" name="class_id" required onchange="storeClassSelection(this.value)">
             <option value="">-- Select Class --</option>
             <?php if ($hasClasses): ?>
                 <?php while ($row = $classes_result->fetch_assoc()): ?>
@@ -249,5 +249,15 @@ $hasClasses = $classes_result && $classes_result->rowCount > 0;
     </form>
 </div>
 
+<script>
+function storeClassSelection(value) {
+    // Store the selected class value to prevent it from being reset
+    // This helps prevent the "pop" effect when selecting a class
+    const select = document.getElementById('class_id');
+    if (select && select.value !== value) {
+        select.value = value;
+    }
+}
+</script>
 </body>
 </html>
