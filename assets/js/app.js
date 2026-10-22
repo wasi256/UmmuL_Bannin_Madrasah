@@ -912,6 +912,10 @@ async function loadFeesTable() {
                 <td>${escapeHtml(c.class_name)}</td>
                 <td>${escapeHtml(c.section)}</td>
                 <td>UGX ${formatNumber(c.term_fee)}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="editFee('${c.fee_key}')">Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteFee('${c.fee_key}')">Delete</button>
+                </td>
             </tr>
         `).join('');
     } catch (err) {
@@ -992,5 +996,56 @@ async function deleteStudent(id) {
         // If it's a soft-delete (status set to Withdrawn), it should succeed
         // If failing, check if student has related records blocking the operation
         alert('Error: ' + (err.message || 'Unknown error removing student'));
+    }
+}
+
+async function editFee(feeKey) {
+    if (!confirm('Are you sure you want to edit this fee default?')) return;
+    
+    // Map fee keys to labels
+    const labelMap = {
+        'boarding': 'Boarding',
+        'upper_primary': 'Upper Primary', 
+        'lower_primary': 'Lower Primary',
+        'nursery': 'Nursery'
+    };
+    const defaultLabel = labelMap[feeKey] || feeKey;
+    
+    const newAmount = prompt('Enter new amount (UGX):', '');
+    if (newAmount === null || newAmount.trim() === '') return;
+    const amount = parseInt(newAmount);
+    if (isNaN(amount) || amount < 0) {
+        alert('Please enter a valid non-negative amount.');
+        return;
+    }
+    try {
+        const response = await fetch(`${API_BASE}fees`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fee_key: feeKey, label: defaultLabel, amount: amount })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not update fee.');
+        alert('Fee updated successfully.');
+        await loadFeesTable();
+    } catch (err) {
+        console.error('Edit fee error:', err);
+        alert('Error: ' + (err.message || 'Unknown error updating fee'));
+    }
+}
+
+async function deleteFee(feeKey) {
+    if (!confirm('Are you sure you want to delete this fee default?')) return;
+    try {
+        const response = await fetch(`${API_BASE}fees/${feeKey}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not delete fee.');
+        alert('Fee deleted successfully.');
+        await loadFeesTable();
+    } catch (err) {
+        console.error('Delete fee error:', err);
+        alert('Error: ' + (err.message || 'Unknown error deleting fee'));
     }
 }

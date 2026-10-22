@@ -48,7 +48,7 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "postgresql://neondb_owner:npg_cB1QbSRFli5J@ep-curly-dawn-b4fml3t0-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+    "DATABASE_URL": "postgresql://neondb_owner:npg_cB1QbSRFli5J@ep-curly-dawn-b4fml3t0-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=proxy",
     "SESSION_SECRET": "ummul-bannin-madrasah-secret-key-2026",
     "NODE_ENV": "production"
   }
