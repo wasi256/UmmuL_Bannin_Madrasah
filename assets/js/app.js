@@ -825,8 +825,19 @@ async function loadUniformsTable() {
         }
         const items = await res.json();
         
+        // Add "Add New Uniform" button before the table
+        const addButtonHtml = `
+            <tr>
+                <td colspan="6" style="padding: 12px; background-color: #e8f5e9; border-top: 1px solid #cddc39;">
+                    <button style="background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;" onclick="showAddUniformForm()">
+                        + Add New Uniform
+                    </button>
+                </td>
+            </tr>
+        `;
+        
         const tbody = document.querySelector('#uniformsTable tbody');
-        tbody.innerHTML = items.map(u => `
+        tbody.innerHTML = addButtonHtml + items.map(u => `
             <tr>
                 <td>${escapeHtml(u.item_name)}</td>
                 <td>${escapeHtml(u.applicable_section)}</td>
@@ -842,6 +853,102 @@ async function loadUniformsTable() {
     } catch (err) {
         console.error('Uniforms table error:', err);
         showLogin();
+    }
+}
+
+function showAddUniformForm() {
+    const formHtml = `
+        <div id="addUniformForm" style="background: #f8f9fa; padding: 20px; border-radius: 8; margin: 20px 0; display: block;">
+            <h3>Add New Uniform Item</h3>
+            <form onsubmit="addUniformItem(event)">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label>Item Name *</label>
+                        <input type="text" id="newItemName" required>
+                    </div>
+                    <div>
+                        <label>Section *</label>
+                        <select id="newSection" required>
+                            <option value="All">All Sections</option>
+                            <option value="Nursery">Nursery</option>
+                            <option value="Lower Primary">Lower Primary</option>
+                            <option value="Upper Primary">Upper Primary</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Gender *</label>
+                        <select id="newGender" required>
+                            <option value="All">All (Boys & Girls)</option>
+                            <option value="Female">Girls Only</option>
+                            <option value="Male">Boys Only</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Price (UGX) *</label>
+                        <input type="number" id="newPrice" min="0" required>
+                    </div>
+                    <div>
+                        <label>Initial Stock</label>
+                        <input type="number" id="newStock" value="0" min="0">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="submit" style="background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px;">Add Item</button>
+                    <button type="button" onclick="hideAddUniformForm()" style="background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    const existing = document.getElementById('addUniformForm');
+    if (existing) existing.remove();
+    
+    const panel = document.querySelector('.panel') || document.body;
+    panel.insertAdjacentHTML('beforeend', formHtml);
+}
+
+function hideAddUniformForm() {
+    const form = document.getElementById('addUniformForm');
+    if (form) form.remove();
+}
+
+async function addUniformItem(e) {
+    e.preventDefault();
+    const itemName = document.getElementById('newItemName').value;
+    const section = document.getElementById('newSection').value;
+    const gender = document.getElementById('newGender').value;
+    const price = document.getElementById('newPrice').value;
+    const stock = document.getElementById('newStock').value || 0;
+    
+    if (!itemName || !price) {
+        alert('Please fill in item name and price.');
+        return;
+    }
+    
+    try {
+        const res = await fetch(`${API_BASE}/uniform-items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                item_name: itemName,
+                applicable_section: section,
+                applicable_gender: gender,
+                price: Number(price),
+                quantity_in_stock: Number(stock)
+            })
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+            alert('Uniform item added successfully!');
+            hideAddUniformForm();
+            await loadUniformsTable();
+            await loadUniformItems();
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    } catch (err) {
+        alert('Connection error: ' + err.message);
     }
 }
 
@@ -903,7 +1010,7 @@ async function loadUniformIssueForm() {
 // Load fees table
 async function loadFeesTable() {
     try {
-        if (!classes.length) await loadClasses();
+        await loadClasses();
         // Ensure exactly 10 classes are displayed
         const displayClasses = classes.slice(0, 10);
         const tbody = document.querySelector('#feesTable tbody');
